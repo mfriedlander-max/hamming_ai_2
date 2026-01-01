@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TestBatch",
+  "type": "object",
+  "required": ["tests"],
+  "properties": {
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status", "transcript"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pass", "fail"]
+          },
+          "transcript": {
+            "type": "string"
+          },
+          "expectedBehavior": {
+            "type": "string"
+          },
+          "actualBehavior": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}
