@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout/PageContainer";
 
 export default function LandingPage() {
@@ -16,14 +14,9 @@ export default function LandingPage() {
           minimal edit suggestions backed by evidence. Every change justified.
         </p>
         <div className="mt-10 flex items-center gap-4">
-          <Link href="/projects/new">
-            <Button size="lg">Analyze a Test Batch</Button>
-          </Link>
-          <Link href="/dashboard">
-            <Button size="lg" variant="outline">
-              View Dashboard
-            </Button>
-          </Link>
+          <p className="text-sm text-gray-500">
+            Foundation ready. Features coming soon.
+          </p>
         </div>
       </div>
     </PageContainer>
