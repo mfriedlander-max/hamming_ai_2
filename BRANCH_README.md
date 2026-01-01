@@ -1,11 +1,12 @@
 # Branch: feat/upload-ingest
 
-**Purpose**: File upload & ingestion: project creation, test batch upload (JSON/CSV/Excel), parsing/validation, and basic dashboard/new project flow.
-**Scope**: Frontend (App Router) with IndexedDB persistence for projects and test batches.
+**Purpose**: Upload and ingestion feature branch; currently aligned to the integrated baseline (includes upload, analysis, and UI from main).
+**Scope**: Full app feature set through the analysis baseline; retains upload/ingest focus and IndexedDB persistence for projects and test batches.
 **Builds on**: feat/project-setup.
 **What’s included**:
 - Parsers for JSON/CSV/Excel → normalized TestResult[].
 - Project & test batch Dexie helpers and `useProjects` hook.
-- Upload UI (drag-drop), prompt input, dashboard listing, new project flow, empty/loading states for projects.
+- Upload UI (drag-drop), prompt input, dashboard listing, new project flow, empty/loading states.
+- Analysis engine and integrated UI from main (temporary alignment).
 
-**Notes**: This branch is feature-scoped to upload/ingest only. No analysis/suggestions/history UI here. Use as base for analysis-engine.
+**Notes**: Mirrors main for now; will diverge if upload-specific changes are isolated later.

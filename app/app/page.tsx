@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { Button } from "@/components/ui/button";
 
 export default function LandingPage() {
   return (
@@ -13,10 +15,15 @@ export default function LandingPage() {
           Analyze test batches against your system prompts. Get traceable,
           minimal edit suggestions backed by evidence. Every change justified.
         </p>
-        <div className="mt-10 flex items-center gap-4">
-          <p className="text-sm text-gray-500">
-            Foundation ready. Features coming soon.
-          </p>
+        <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
+          <Link href="/projects/new">
+            <Button size="lg">Analyze a Test Batch</Button>
+          </Link>
+          <Link href="/dashboard">
+            <Button size="lg" variant="outline">
+              View Dashboard
+            </Button>
+          </Link>
         </div>
       </div>
     </PageContainer>
