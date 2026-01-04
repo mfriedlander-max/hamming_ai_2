@@ -93,9 +93,11 @@
   .gradient-hero {
     background: linear-gradient(
       135deg,
-      hsl(221.2 83.2% 97%) 0%,
-      hsl(210 40% 98%) 50%,
-      hsl(0 0% 100%) 100%
+      hsl(217 91% 97%) 0%,
+      hsl(210 40% 98%) 25%,
+      hsl(0 0% 100%) 50%,
+      hsl(210 40% 98%) 75%,
+      hsl(217 91% 97%) 100%
     );
   }
 
@@ -104,6 +106,20 @@
       180deg,
       hsl(0 0% 100%) 0%,
       hsl(210 40% 98%) 100%
+    );
+  }
+
+  /* Subtle section background for alternating sections */
+  .bg-section-alt {
+    background-color: hsl(210 20% 98%);
+  }
+
+  /* Static gradient for Final CTA */
+  .gradient-cta {
+    background: linear-gradient(
+      180deg,
+      hsl(217 91% 97%) 0%,
+      hsl(0 0% 100%) 100%
     );
   }
 

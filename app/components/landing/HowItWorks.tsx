@@ -15,7 +15,7 @@ export function HowItWorks() {
   const { howItWorks } = LANDING_CONTENT;
 
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24 bg-section-alt">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.h2
           className="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-16"

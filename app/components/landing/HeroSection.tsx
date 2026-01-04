@@ -11,7 +11,7 @@ export function HeroSection() {
 
   return (
     <section className="relative overflow-hidden gradient-hero animate-gradient">
-      <BackgroundPattern pattern="dots" opacity={0.03} />
+      <BackgroundPattern pattern="dots" opacity={0.015} />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center text-center">

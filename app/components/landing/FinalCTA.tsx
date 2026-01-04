@@ -11,8 +11,8 @@ export function FinalCTA() {
   const { finalCTA } = LANDING_CONTENT;
 
   return (
-    <section className="relative py-24 bg-white overflow-hidden">
-      <BackgroundPattern pattern="diagonal" opacity={0.02} />
+    <section className="relative py-24 gradient-cta overflow-hidden">
+      <BackgroundPattern pattern="diagonal" opacity={0.01} />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
