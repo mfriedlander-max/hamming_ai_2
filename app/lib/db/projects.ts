@@ -7,6 +7,7 @@ export async function createProject(data: {
   name: string;
   description?: string;
   tags?: string[];
+  systemPrompt?: string;
 }): Promise<Project> {
   const now = Date.now();
   const project: Project = {
@@ -17,6 +18,7 @@ export async function createProject(data: {
     updatedAt: now,
     currentPromptVersion: "",
     tags: data.tags,
+    systemPrompt: data.systemPrompt,
   };
 
   await db.projects.add(project);
@@ -26,6 +28,7 @@ export async function createProject(data: {
     actor: "user",
     details: {
       projectName: project.name,
+      hasSystemPrompt: !!data.systemPrompt,
     },
   });
   return project;

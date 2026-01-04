@@ -78,9 +78,9 @@ export function UploadTestBatch({ onUpload }: UploadTestBatchProps) {
 
   return (
     <div className="space-y-4">
-      <Card
-        {...getRootProps({ "aria-label": "Upload test batch" })}
-        className={`transition-smooth cursor-pointer border-2 border-dashed p-6 text-center md:p-12 ${
+      <div
+        {...getRootProps()}
+        className={`rounded-xl border bg-card text-card-foreground shadow transition-smooth cursor-pointer border-2 border-dashed p-6 text-center md:p-12 ${
           isDragActive
             ? "border-blue-500 bg-blue-50"
             : "border-gray-300 hover:border-gray-400"
@@ -98,7 +98,7 @@ export function UploadTestBatch({ onUpload }: UploadTestBatchProps) {
         <p className="mt-2 text-xs text-gray-500">
           Supports JSON, CSV, and Excel (.xlsx, .xls)
         </p>
-      </Card>
+      </div>
 
       {parsing && (
         <div className="text-center text-sm text-gray-600" role="status" aria-live="polite">

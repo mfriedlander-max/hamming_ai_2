@@ -1,7 +1,12 @@
-# Branch: main
+# Branch: feat/upload-ingest
 
-**Purpose**: Mirrors current integrated state (analysis engine and earlier) until feature-specific commits are isolated.
-**Scope**: Currently identical to feat/analysis-engine; includes upload, analysis, and UI present in that branch.
-**Builds on**: feat/analysis-engine (temporary alignment).
+**Purpose**: Upload and ingestion feature branch; currently aligned to the integrated baseline (includes upload, analysis, and UI from main).
+**Scope**: Full app feature set through the analysis baseline; retains upload/ingest focus and IndexedDB persistence for projects and test batches.
+**Builds on**: feat/project-setup.
+**What’s included**:
+- Parsers for JSON/CSV/Excel → normalized TestResult[].
+- Project & test batch Dexie helpers and `useProjects` hook.
+- Upload UI (drag-drop), prompt input, dashboard listing, new project flow, empty/loading states.
+- Analysis engine and integrated UI from main (temporary alignment).
 
-**Notes**: This branch will diverge when feature-specific work is available. For now it serves as a placeholder pointer to the integrated baseline.
+**Notes**: Mirrors main for now; will diverge if upload-specific changes are isolated later.

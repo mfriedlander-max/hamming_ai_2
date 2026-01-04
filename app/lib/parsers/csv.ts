@@ -9,14 +9,32 @@ export async function parseCSV(file: File): Promise<TestResult[]> {
       skipEmptyLines: true,
       complete: (results) => {
         try {
+          // Validate results exist and are not empty
+          if (!results.data || !Array.isArray(results.data) || results.data.length === 0) {
+            reject(new Error("CSV file is empty or contains no valid data"));
+            return;
+          }
+
           const tests: TestResult[] = results.data.map((row: any) => {
+            // Safely parse metadata JSON
+            let metadata: Record<string, any> | undefined = undefined;
+            if (row.metadata) {
+              try {
+                metadata = JSON.parse(row.metadata);
+              } catch (e) {
+                throw new Error(
+                  `Invalid JSON in metadata field for test "${row.id || row.test_id || row.testId || 'unknown'}": ${e instanceof Error ? e.message : 'Unknown error'}`
+                );
+              }
+            }
+
             const normalized = {
               id: row.id || row.test_id || row.testId || "",
               status: (row.status || "fail").toLowerCase(),
               transcript: row.transcript || row.output || "",
               expectedBehavior: row.expected_behavior || row.expectedBehavior,
               actualBehavior: row.actual_behavior || row.actualBehavior,
-              metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+              metadata,
             };
 
             return TestResultSchema.parse(normalized);
@@ -24,7 +42,7 @@ export async function parseCSV(file: File): Promise<TestResult[]> {
 
           resolve(tests);
         } catch (error) {
-          reject(new Error(`CSV validation failed: ${error}`));
+          reject(new Error(`CSV validation failed: ${error instanceof Error ? error.message : error}`));
         }
       },
       error: (error) => {
