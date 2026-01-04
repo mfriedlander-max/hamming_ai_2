@@ -34,9 +34,13 @@ export async function getTestBatch(id: string): Promise<TestBatch | undefined> {
 export async function getTestBatchesByProject(
   projectId: string
 ): Promise<TestBatch[]> {
-  return await db.testBatches
+  // Use explicit sorting instead of reverse for proper ordering
+  // .reverse() doesn't guarantee order without sortBy when using where()
+  const batches = await db.testBatches
     .where("projectId")
     .equals(projectId)
-    .reverse()
     .toArray();
+
+  // Sort by uploadedAt in descending order (newest first)
+  return batches.sort((a, b) => b.uploadedAt - a.uploadedAt);
 }

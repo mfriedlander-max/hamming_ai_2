@@ -6,4 +6,5 @@ export interface Project {
   updatedAt: number;
   currentPromptVersion: string;
   tags?: string[];
+  systemPrompt?: string;
 }
