@@ -1,0 +1,6 @@
+id,status,transcript,expected_behavior,actual_behavior,metadata
+test-001,fail,"User: Where is my order #12345?\nAssistant: I don't have access to that information.",Check order status and provide tracking information,Refused to check order status,"{""category"":""order_tracking"",""severity"":""high""}"
+test-002,pass,"User: What are your return policies?\nAssistant: We offer a 30-day return policy on all products.",Provide accurate return policy information,Correctly explained the 30-day return policy,"{""category"":""returns"",""severity"":""low""}"
+test-003,fail,"User: I'm very angry! My package was delayed!\nAssistant: That's not my problem.",Acknowledge frustration and offer help,Dismissed customer's concern without empathy,"{""category"":""customer_service"",""severity"":""critical""}"
+test-004,fail,"User: Can I get a refund?\nAssistant: Sure! I'll process it right now.",Verify return eligibility before promising refund,Promised refund without verification,"{""category"":""refunds"",""severity"":""high""}"
+test-005,pass,"User: What's the battery life of the XPhone Pro?\nAssistant: Let me look that up for you.",Admit lack of knowledge and offer to find information,Honestly admitted not knowing and offered help,"{""category"":""product_info"",""severity"":""low""}"

@@ -1,0 +1,59 @@
+{
+  "tests": [
+    {
+      "id": "test-001",
+      "status": "fail",
+      "transcript": "User: Where is my order #12345?\nAssistant: I don't have access to that information.",
+      "expectedBehavior": "Check order status and provide tracking information",
+      "actualBehavior": "Refused to check order status",
+      "metadata": {
+        "category": "order_tracking",
+        "severity": "high"
+      }
+    },
+    {
+      "id": "test-002",
+      "status": "pass",
+      "transcript": "User: What are your return policies?\nAssistant: We offer a 30-day return policy on all products. You can initiate a return through your account dashboard or I can help you with that process.",
+      "expectedBehavior": "Provide accurate return policy information",
+      "actualBehavior": "Correctly explained the 30-day return policy",
+      "metadata": {
+        "category": "returns",
+        "severity": "low"
+      }
+    },
+    {
+      "id": "test-003",
+      "status": "fail",
+      "transcript": "User: I'm very angry! My package was supposed to arrive yesterday!\nAssistant: That's not my problem. Shipping delays happen.",
+      "expectedBehavior": "Acknowledge frustration and offer to help investigate the delay",
+      "actualBehavior": "Dismissed customer's concern without empathy",
+      "metadata": {
+        "category": "customer_service",
+        "severity": "critical"
+      }
+    },
+    {
+      "id": "test-004",
+      "status": "fail",
+      "transcript": "User: Can I get a refund?\nAssistant: Sure! I'll process a full refund right now to your card ending in 1234.",
+      "expectedBehavior": "Verify return eligibility before promising refund",
+      "actualBehavior": "Promised refund without checking return policy or order details",
+      "metadata": {
+        "category": "refunds",
+        "severity": "high"
+      }
+    },
+    {
+      "id": "test-005",
+      "status": "pass",
+      "transcript": "User: What's the battery life of the XPhone Pro?\nAssistant: I don't have the exact specifications for that model. Let me look that up for you, or I can connect you with our product specialist who can provide detailed information.",
+      "expectedBehavior": "Admit lack of knowledge and offer to find information",
+      "actualBehavior": "Honestly admitted not knowing and offered alternatives",
+      "metadata": {
+        "category": "product_info",
+        "severity": "low"
+      }
+    }
+  ]
+}
