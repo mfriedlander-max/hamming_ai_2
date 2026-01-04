@@ -92,12 +92,10 @@
   /* Gradient backgrounds for landing sections */
   .gradient-hero {
     background: linear-gradient(
-      135deg,
-      hsl(217 91% 97%) 0%,
-      hsl(210 40% 98%) 25%,
-      hsl(0 0% 100%) 50%,
-      hsl(210 40% 98%) 75%,
-      hsl(217 91% 97%) 100%
+      180deg,
+      hsl(230 70% 92%) 0%,
+      hsl(225 60% 94%) 50%,
+      hsl(220 50% 96%) 100%
     );
   }
 
@@ -118,8 +116,8 @@
   .gradient-cta {
     background: linear-gradient(
       180deg,
-      hsl(217 91% 97%) 0%,
-      hsl(0 0% 100%) 100%
+      hsl(230 70% 92%) 0%,
+      hsl(220 50% 96%) 100%
     );
   }
 
