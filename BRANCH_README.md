@@ -1,7 +1,14 @@
-# Branch: PLACEHOLDER
+# Branch: feat/prompt-editor
 
-**Purpose**: Mirrors current integrated state (analysis engine and earlier) until feature-specific commits are isolated.
-**Scope**: Currently identical to feat/analysis-engine; includes upload, analysis, and UI present in that branch.
-**Builds on**: feat/analysis-engine (temporary alignment).
+**Purpose**: Prompt editor feature with comprehensive test coverage.
+**Scope**: Prompt editing, diff viewing, version management, plus all UI polish from main.
+**Builds on**: main (with UI polish merged in).
 
-**Notes**: This branch will diverge when feature-specific work is available. For now it serves as a placeholder pointer to the integrated baseline.
+**What's included**:
+- Prompt editor components (DiffViewer, version management)
+- Analysis engine integration
+- Suggestions engine
+- 134 unit/component tests
+- Full UI polish (landing page, animations, gradients)
+
+**Notes**: This branch includes all features from main plus prompt editor functionality and tests.

@@ -6,6 +6,23 @@ A clean, professional SaaS web application that analyzes test batches against sy
 
 ---
 
+## Branch Overview
+- **feat/project-setup**: Baseline scaffold (Next.js, Tailwind, Dexie schema, types, base UI shell). Use as the clean reset point.
+- **feat/upload-ingest**: Project creation, test batch upload/parsing (JSON/CSV/Excel), IndexedDB storage, dashboard/new project flow, empty/loading states.
+- **feat/analysis-engine**: Claude-powered failure analysis (API route/client), analysis storage/hooks, analysis results UI. Downstream feature branches currently mirror this integrated baseline.
+- **feat/suggestions-engine**: Placeholder; currently mirrors analysis baseline until suggestion-specific commits exist.
+- **feat/prompt-editor**: Placeholder; currently mirrors analysis baseline until editor-specific commits exist.
+- **feat/history-projects**: Placeholder; currently mirrors analysis baseline until history/version-specific commits exist.
+- **feat/export**: Placeholder; currently mirrors analysis baseline until export-specific commits exist.
+- **feat/ui-polish**: Placeholder; currently mirrors analysis baseline until UI polish commits exist.
+- **feat/observability**: Placeholder; currently mirrors analysis baseline until observability commits exist.
+- **dev**: Mirrors the integrated baseline (currently same as analysis). Future integration branch.
+- **main**: Mirrors the integrated baseline (currently same as analysis). Production-ready once all features isolate.
+
+> Note: Only two feature-bearing commits exist at the moment (project-setup and upload-ingest). All downstream branches are aligned to the integrated analysis baseline and will diverge when feature-specific work is isolated.
+
+---
+
 ## What It Does
 
 1. **Upload Test Batches**: Import test results in JSON, CSV, or Excel format

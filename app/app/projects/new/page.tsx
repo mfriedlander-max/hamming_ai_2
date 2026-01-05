@@ -55,6 +55,7 @@ export default function NewAnalysisPage() {
     try {
       const project = await createProject({
         name: projectName.trim(),
+        systemPrompt: systemPrompt.trim(),
       });
 
       await createTestBatch({

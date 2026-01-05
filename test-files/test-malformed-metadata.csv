@@ -1,0 +1,2 @@
+id,status,transcript,expected_behavior,actual_behavior,metadata
+test-001,fail,"User: Hello\nAssistant: Hi",Should greet properly,Greeted properly,"{bad json here}"
