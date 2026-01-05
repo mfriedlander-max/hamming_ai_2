@@ -25,6 +25,7 @@
     "dexie": "^4.0.1",
     "dexie-react-hooks": "^1.1.7",
     "diff": "^5.2.0",
+    "framer-motion": "^12.23.26",
     "lucide-react": "^0.344.0",
     "nanoid": "^5.0.5",
     "next": "^14.2.0",
