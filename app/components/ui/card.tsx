@@ -9,23 +9,28 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, hover = false, ...props }, ref) => {
-    const Component = hover ? motion.div : "div";
-    const hoverProps = hover
-      ? {
-          whileHover: { y: -4 },
-          transition: { type: "spring", stiffness: 300, damping: 25 },
-        }
-      : {};
+    const baseClassName = cn(
+      "rounded-xl border bg-card text-card-foreground shadow",
+      hover && "transition-shadow hover:shadow-lg",
+      className
+    );
+
+    if (hover) {
+      return (
+        <motion.div
+          ref={ref}
+          className={baseClassName}
+          whileHover={{ y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          {...(props as React.ComponentProps<typeof motion.div>)}
+        />
+      );
+    }
 
     return (
-      <Component
+      <div
         ref={ref}
-        className={cn(
-          "rounded-xl border bg-card text-card-foreground shadow",
-          hover && "transition-shadow hover:shadow-lg",
-          className
-        )}
-        {...hoverProps}
+        className={baseClassName}
         {...props}
       />
     );

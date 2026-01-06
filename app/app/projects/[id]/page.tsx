@@ -1,12 +1,12 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AnalysisResults } from "@/components/analysis/AnalysisResults";
 import { useAnalysis } from "@/lib/hooks/useAnalysis";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getProject } from "@/lib/db/projects";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,24 @@ import type { Project } from "@/types";
 
 export default function ProjectDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const projectId = params.id as string;
+
+  // Get category from URL param
+  const selectedCategoryId = searchParams.get("category");
+
+  // Update URL when category changes
+  const setSelectedCategoryId = useCallback((categoryId: string | null) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    if (categoryId) {
+      newParams.set("category", categoryId);
+    } else {
+      newParams.delete("category");
+    }
+    const queryString = newParams.toString();
+    router.replace(`/projects/${projectId}${queryString ? `?${queryString}` : ""}`, { scroll: false });
+  }, [projectId, router, searchParams]);
 
   const { analysis, testBatch, loading, analyzing, error, runAnalysis } =
     useAnalysis(projectId);
@@ -171,7 +188,12 @@ export default function ProjectDetailPage() {
                 Export Analysis
               </Button>
             </div>
-            <AnalysisResults analysis={analysis} testBatch={testBatch} />
+            <AnalysisResults
+              analysis={analysis}
+              testBatch={testBatch}
+              selectedCategoryId={selectedCategoryId}
+              onCategoryChange={setSelectedCategoryId}
+            />
           </div>
         )}
       </div>

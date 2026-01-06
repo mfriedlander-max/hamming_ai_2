@@ -13,12 +13,23 @@ import Link from "next/link";
 interface AnalysisResultsProps {
   analysis: Analysis;
   testBatch: TestBatch;
+  selectedCategoryId?: string | null;
+  onCategoryChange?: (categoryId: string | null) => void;
 }
 
-export function AnalysisResults({ analysis, testBatch }: AnalysisResultsProps) {
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null
-  );
+export function AnalysisResults({
+  analysis,
+  testBatch,
+  selectedCategoryId: controlledCategoryId,
+  onCategoryChange,
+}: AnalysisResultsProps) {
+  // Support both controlled (URL-based) and uncontrolled (local state) usage
+  const [localCategoryId, setLocalCategoryId] = useState<string | null>(null);
+
+  const isControlled = controlledCategoryId !== undefined && onCategoryChange !== undefined;
+  const selectedCategoryId = isControlled ? controlledCategoryId : localCategoryId;
+  const setSelectedCategoryId = isControlled ? onCategoryChange : setLocalCategoryId;
+
   const { suggestions, generating, generateForCategory } = useSuggestions(
     analysis.id
   );
