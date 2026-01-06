@@ -13,7 +13,8 @@ export async function createVersion(data: {
   analysisId?: string;
 }): Promise<PromptVersion> {
   const existingVersions = await getVersionsByProject(data.projectId);
-  const versionNumber = existingVersions.length + 1;
+  // V0-based versioning: first version is 0, subsequent versions are 1, 2, 3...
+  const versionNumber = existingVersions.length;
 
   const version: PromptVersion = {
     id: nanoid(),

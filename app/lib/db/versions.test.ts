@@ -47,7 +47,7 @@ describe('versions database operations', () => {
       createdBy: 'user' as const,
     }
 
-    it('should create a version with correct structure', async () => {
+    it('should create a version with correct structure starting at V0', async () => {
       const result = await createVersion(mockVersionData)
 
       expect(result).toMatchObject({
@@ -55,22 +55,23 @@ describe('versions database operations', () => {
         projectId: 'project-1',
         content: 'New prompt content',
         createdBy: 'user',
-        versionNumber: 1,
+        versionNumber: 0, // V0-based versioning: first version is 0
       })
       expect(result.createdAt).toBeDefined()
       expect(typeof result.createdAt).toBe('number')
     })
 
-    it('should auto-increment version number', async () => {
-      // Simulate 2 existing versions
+    it('should auto-increment version number with V0-based numbering', async () => {
+      // Simulate 2 existing versions (V0 and V1)
       mockVersionsSortBy.mockResolvedValue([
+        { id: 'v0', versionNumber: 0 },
         { id: 'v1', versionNumber: 1 },
-        { id: 'v2', versionNumber: 2 },
       ])
 
       const result = await createVersion(mockVersionData)
 
-      expect(result.versionNumber).toBe(3)
+      // With 2 existing versions, next version should be V2
+      expect(result.versionNumber).toBe(2)
     })
 
     it('should include optional fields when provided', async () => {
@@ -99,7 +100,7 @@ describe('versions database operations', () => {
       )
     })
 
-    it('should create audit entry', async () => {
+    it('should create audit entry with V0 for first version', async () => {
       await createVersion(mockVersionData)
 
       expect(mockCreateAuditEntry).toHaveBeenCalledWith(
@@ -107,7 +108,7 @@ describe('versions database operations', () => {
           action: 'created_version',
           actor: 'user',
           details: expect.objectContaining({
-            versionNumber: 1,
+            versionNumber: 0, // V0-based versioning
           }),
         })
       )
@@ -120,6 +121,22 @@ describe('versions database operations', () => {
       })
 
       expect(result.createdBy).toBe('system')
+    })
+
+    it('should create V0 as initial version for new project', async () => {
+      // No existing versions
+      mockVersionsSortBy.mockResolvedValue([])
+
+      const result = await createVersion({
+        projectId: 'new-project',
+        content: 'Initial prompt content',
+        createdBy: 'user',
+        changesSummary: 'Initial prompt',
+      })
+
+      expect(result.versionNumber).toBe(0)
+      expect(result.changesSummary).toBe('Initial prompt')
+      expect(result.createdBy).toBe('user')
     })
   })
 
@@ -151,9 +168,9 @@ describe('versions database operations', () => {
   describe('getVersionsByProject', () => {
     it('should return versions sorted by version number', async () => {
       const mockVersions = [
+        { id: 'v0', versionNumber: 0 },
         { id: 'v1', versionNumber: 1 },
         { id: 'v2', versionNumber: 2 },
-        { id: 'v3', versionNumber: 3 },
       ]
       mockVersionsSortBy.mockResolvedValue(mockVersions)
 
@@ -175,15 +192,15 @@ describe('versions database operations', () => {
   describe('getLatestVersion', () => {
     it('should return the last (latest) version', async () => {
       const mockVersions = [
+        { id: 'v0', versionNumber: 0 },
         { id: 'v1', versionNumber: 1 },
         { id: 'v2', versionNumber: 2 },
-        { id: 'v3', versionNumber: 3 },
       ]
       mockVersionsSortBy.mockResolvedValue(mockVersions)
 
       const result = await getLatestVersion('project-1')
 
-      expect(result).toEqual({ id: 'v3', versionNumber: 3 })
+      expect(result).toEqual({ id: 'v2', versionNumber: 2 })
     })
 
     it('should return undefined when no versions exist', async () => {
@@ -194,13 +211,13 @@ describe('versions database operations', () => {
       expect(result).toBeUndefined()
     })
 
-    it('should return only version when single version exists', async () => {
-      const mockVersions = [{ id: 'v1', versionNumber: 1 }]
+    it('should return V0 when single version exists', async () => {
+      const mockVersions = [{ id: 'v0', versionNumber: 0 }]
       mockVersionsSortBy.mockResolvedValue(mockVersions)
 
       const result = await getLatestVersion('project-1')
 
-      expect(result).toEqual({ id: 'v1', versionNumber: 1 })
+      expect(result).toEqual({ id: 'v0', versionNumber: 0 })
     })
   })
 })

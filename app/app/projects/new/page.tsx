@@ -11,6 +11,7 @@ import { UploadTestBatch } from "@/components/analysis/UploadTestBatch";
 import { PromptInput } from "@/components/analysis/PromptInput";
 import { createProject, DuplicateProjectNameError } from "@/lib/db/projects";
 import { createTestBatch } from "@/lib/db/testBatches";
+import { createVersion } from "@/lib/db/versions";
 import type { TestResult } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/layout/BackButton";
@@ -63,6 +64,14 @@ export default function NewAnalysisPage() {
         fileName: uploadedTests!.fileName,
         fileType: uploadedTests!.fileType,
         tests: uploadedTests!.tests,
+      });
+
+      // Create V0 (Initial) version with the first prompt
+      await createVersion({
+        projectId: project.id,
+        content: systemPrompt.trim(),
+        createdBy: "user",
+        changesSummary: "Initial prompt",
       });
 
       toast({

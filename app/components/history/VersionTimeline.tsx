@@ -58,7 +58,7 @@ export function VersionTimeline({
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-gray-900">
-                      Version {version.versionNumber}
+                      V{version.versionNumber}{version.versionNumber === 0 ? " (Initial)" : ""}
                     </h3>
                     {isLatest && <Badge variant="default">Current</Badge>}
                     {version.createdBy === "user" && (
