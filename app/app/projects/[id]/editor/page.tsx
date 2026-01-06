@@ -9,6 +9,7 @@ import { PromptPreview } from "@/components/editor/PromptPreview";
 import { SuggestionPanel } from "@/components/editor/SuggestionPanel";
 import { useAnalysis } from "@/lib/hooks/useAnalysis";
 import { useSuggestions } from "@/lib/hooks/useSuggestions";
+import { useDraftSuggestions } from "@/lib/hooks/useDraftSuggestions";
 import { useVersions } from "@/lib/hooks/useVersions";
 import { applyAcceptedSuggestions } from "@/lib/diff/applier";
 import { useState, useEffect } from "react";
@@ -31,10 +32,18 @@ export default function EditorPage() {
   const projectId = params.id as string;
 
   const { analysis, testBatch } = useAnalysis(projectId);
-  const { suggestions, refresh: refreshSuggestions } = useSuggestions(
-    analysis?.id || ""
-  );
+  const { suggestions } = useSuggestions(analysis?.id || "");
   const { addVersion } = useVersions(projectId);
+
+  // Use draft suggestions for local, reversible state management
+  const {
+    draftSuggestions,
+    toggleAccept,
+    setStatus,
+    isDraftModified,
+    acceptedCount,
+    pendingCount,
+  } = useDraftSuggestions(suggestions);
 
   const [updatedPrompt, setUpdatedPrompt] = useState("");
   const [applying, setApplying] = useState(false);
@@ -65,7 +74,7 @@ export default function EditorPage() {
   const handleExportReport = async () => {
     if (!analysis || !testBatch) return;
 
-    const acceptedSuggestions = suggestions.filter((s) => s.status === "accepted");
+    const acceptedSuggestions = draftSuggestions.filter((s) => s.status === "accepted");
     if (acceptedSuggestions.length === 0) {
       toast({
         title: "No accepted suggestions",
@@ -89,7 +98,7 @@ export default function EditorPage() {
 
     exportChangeReport(
       analysis,
-      suggestions,
+      draftSuggestions,
       currentVersion,
       previousVersion,
       testBatch,
@@ -101,22 +110,27 @@ export default function EditorPage() {
     });
   };
 
+  // Update preview based on draft suggestions (local state, instant updates)
   useEffect(() => {
-    if (analysis && suggestions.length > 0) {
+    if (analysis && draftSuggestions.length > 0) {
       const result = applyAcceptedSuggestions(
         analysis.systemPrompt,
-        suggestions
+        draftSuggestions
       );
       if (result.success) {
         setUpdatedPrompt(result.updatedPrompt);
         setError(null);
       } else if (result.conflicts) {
         setError(`Conflicts detected: ${result.conflicts.length} suggestion(s)`);
+      } else {
+        // No accepted suggestions - show original prompt
+        setUpdatedPrompt(analysis.systemPrompt);
+        setError(null);
       }
     } else if (analysis) {
       setUpdatedPrompt(analysis.systemPrompt);
     }
-  }, [analysis, suggestions]);
+  }, [analysis, draftSuggestions]);
 
   const handleApply = async () => {
     if (!analysis) return;
@@ -127,9 +141,10 @@ export default function EditorPage() {
 
     setApplying(true);
     try {
+      // Use draftSuggestions for applying changes (creates NEW version, never mutates old)
       const result = applyAcceptedSuggestions(
         analysis.systemPrompt,
-        suggestions
+        draftSuggestions
       );
 
       if (!result.success) {
@@ -141,12 +156,13 @@ export default function EditorPage() {
         return;
       }
 
-      const acceptedSuggestions = suggestions.filter(
+      const acceptedSuggestions = draftSuggestions.filter(
         (s) => s.status === "accepted"
       );
 
       const changesSummary = `Applied ${acceptedSuggestions.length} suggestion(s)`;
 
+      // Creates a NEW version - prior versions are NEVER modified
       const newVersion = await addVersion({
         content: result.updatedPrompt,
         createdBy: "system",
@@ -197,8 +213,6 @@ export default function EditorPage() {
     );
   }
 
-  const acceptedCount = suggestions.filter((s) => s.status === "accepted").length;
-
   return (
     <PageContainer>
       <div className="space-y-6">
@@ -243,8 +257,12 @@ export default function EditorPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-1 lg:sticky lg:top-24 lg:self-start">
             <SuggestionPanel
-              suggestions={suggestions}
-              onStatusChange={refreshSuggestions}
+              suggestions={draftSuggestions}
+              onToggleAccept={toggleAccept}
+              onSetStatus={setStatus}
+              isDraftModified={isDraftModified}
+              acceptedCount={acceptedCount}
+              pendingCount={pendingCount}
             />
           </div>
 
