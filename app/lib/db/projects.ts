@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { db } from "./client";
 import { createAuditEntry } from "./auditLog";
 import type { Project } from "@/types";
+import { DEFAULT_FOLDER_ID } from "@/types/folder";
 
 export class DuplicateProjectNameError extends Error {
   suggestedName: string;
@@ -42,6 +43,7 @@ export async function createProject(data: {
   description?: string;
   tags?: string[];
   systemPrompt?: string;
+  folderId?: string;
 }): Promise<Project> {
   // Check for duplicate project name
   const nameExists = await checkProjectNameExists(data.name);
@@ -60,6 +62,7 @@ export async function createProject(data: {
     currentPromptVersion: "",
     tags: data.tags,
     systemPrompt: data.systemPrompt,
+    folderId: data.folderId ?? DEFAULT_FOLDER_ID,
   };
 
   await db.projects.add(project);
