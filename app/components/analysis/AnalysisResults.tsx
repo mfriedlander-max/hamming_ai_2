@@ -36,6 +36,10 @@ export function AnalysisResults({ analysis, testBatch }: AnalysisResultsProps) {
     100
   ).toFixed(1);
 
+  const pendingSuggestions = suggestions.filter((s) => s.status === "pending");
+  const hasSuggestions = suggestions.length > 0;
+  const pendingCount = pendingSuggestions.length;
+
   const handleGenerateSuggestions = () => {
     if (selectedCategory) {
       generateForCategory(
@@ -88,21 +92,33 @@ export function AnalysisResults({ analysis, testBatch }: AnalysisResultsProps) {
         </div>
       </Card>
 
-      {suggestions.length > 0 && (
-        <div className="flex justify-end">
+      <div className="flex justify-end">
+        {hasSuggestions ? (
           <Link href={`/projects/${analysis.projectId}/editor`}>
             <Button size="lg">
-              Review & Apply Suggestions ({suggestions.length})
+              Review & Apply Suggestions ({pendingCount})
             </Button>
           </Link>
-        </div>
-      )}
+        ) : (
+          <Button
+            size="lg"
+            disabled
+            title="Generate suggestions first"
+            className="cursor-not-allowed"
+          >
+            Review & Apply Suggestions (0)
+          </Button>
+        )}
+      </div>
 
       {!selectedCategoryId && (
         <div>
-          <h2 className="mb-4 text-xl font-semibold text-gray-900">
+          <h2 className="mb-1 text-xl font-semibold text-gray-900">
             Failure Categories ({analysis.categories.length})
           </h2>
+          <p className="mb-4 text-sm text-gray-600">
+            Click a category to view evidence & generate suggestions
+          </p>
           <div className="space-y-4">
             {analysis.categories.map((category) => (
               <FailureCategoryCard

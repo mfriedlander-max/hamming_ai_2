@@ -16,11 +16,14 @@ import { ExportDialog } from "@/components/export/ExportDialog";
 import { exportPrompt } from "@/lib/export/prompt";
 import { exportChangeReport } from "@/lib/export/report";
 import { db } from "@/lib/db/client";
-import type { Analysis, Suggestion, TestBatch } from "@/types";
+import type { Analysis, Suggestion, TestBatch, Project } from "@/types";
 import { BackButton } from "@/components/layout/BackButton";
+import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { VersionSkeleton } from "@/components/loading/VersionSkeleton";
 import { EmptyVersions } from "@/components/empty/EmptyVersions";
 import { useToast } from "@/hooks/use-toast";
+import { getProject } from "@/lib/db/projects";
+import { Copy, Check } from "lucide-react";
 
 export default function HistoryPage() {
   const params = useParams();
@@ -43,7 +46,38 @@ export default function HistoryPage() {
   const [latestAnalysis, setLatestAnalysis] = useState<Analysis | null>(null);
   const [latestSuggestions, setLatestSuggestions] = useState<Suggestion[]>([]);
   const [latestTestBatch, setLatestTestBatch] = useState<TestBatch | null>(null);
+  const [project, setProject] = useState<Project | null>(null);
+  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+
+  const handleCopyPrompt = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      toast({
+        title: "Copied to clipboard",
+        description: "Prompt content has been copied.",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast({
+        title: "Failed to copy",
+        description: "Could not copy prompt to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Load project for breadcrumb
+  useEffect(() => {
+    async function loadProject() {
+      const proj = await getProject(projectId);
+      if (proj) {
+        setProject(proj);
+      }
+    }
+    loadProject();
+  }, [projectId]);
 
   useEffect(() => {
     const loadLatestData = async () => {
@@ -197,6 +231,12 @@ export default function HistoryPage() {
           </div>
         </div>
 
+        <Breadcrumb
+          projectId={projectId}
+          projectName={project?.name || "Project"}
+          currentPage="history"
+        />
+
         <Tabs defaultValue="versions" className="space-y-6">
           <TabsList>
             <TabsTrigger value="versions">Versions</TabsTrigger>
@@ -223,13 +263,31 @@ export default function HistoryPage() {
                     <h2 className="mb-4 text-xl font-semibold text-gray-900">
                       Version {selectedVersion.versionNumber}
                     </h2>
-                    <Button
-                      variant="outline"
-                      onClick={handleRollback}
-                      disabled={rollingBack}
-                    >
-                      {rollingBack ? "Rolling back..." : "Rollback to this"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleCopyPrompt(selectedVersion.content)}
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="mr-2 h-4 w-4" />
+                            Copied
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copy Prompt
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={handleRollback}
+                        disabled={rollingBack}
+                      >
+                        {rollingBack ? "Rolling back..." : "Rollback to this"}
+                      </Button>
+                    </div>
                   </div>
                   <div className="rounded bg-gray-50 p-4">
                     <pre className="whitespace-pre-wrap font-mono text-sm text-gray-900">

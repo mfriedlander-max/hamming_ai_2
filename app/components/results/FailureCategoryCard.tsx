@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, AlertTriangle, Info } from "lucide-react";
+import { AlertCircle, AlertTriangle, Info, ChevronRight } from "lucide-react";
 import type { FailureCategory } from "@/types";
 
 interface FailureCategoryCardProps {
@@ -40,7 +40,7 @@ export function FailureCategoryCard({
 
   return (
     <Card
-      className={`transition-smooth cursor-pointer p-6 ${config.borderColor} ${config.bgColor} hover:shadow-md`}
+      className={`transition-smooth cursor-pointer p-6 ${config.borderColor} ${config.bgColor} hover:bg-gray-50 hover:shadow-md`}
       onClick={onViewEvidence}
     >
       <div className="flex items-start gap-4">
@@ -65,6 +65,7 @@ export function FailureCategoryCard({
             <span>{category.evidence.length} evidence snippets</span>
           </div>
         </div>
+        <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0 self-center" />
       </div>
     </Card>
   );

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UploadTestBatch } from "@/components/analysis/UploadTestBatch";
 import { PromptInput } from "@/components/analysis/PromptInput";
-import { createProject } from "@/lib/db/projects";
+import { createProject, DuplicateProjectNameError } from "@/lib/db/projects";
 import { createTestBatch } from "@/lib/db/testBatches";
 import type { TestResult } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -72,11 +72,18 @@ export default function NewAnalysisPage() {
       router.push(`/projects/${project.id}`);
     } catch (error) {
       console.error("Failed to create project:", error);
-      toast({
-        title: "Failed to create project",
-        description: "Please try again.",
-        variant: "destructive",
-      });
+      if (error instanceof DuplicateProjectNameError) {
+        setErrors((prev) => ({
+          ...prev,
+          name: `${error.message} Try "${error.suggestedName}" instead.`,
+        }));
+      } else {
+        toast({
+          title: "Failed to create project",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setCreating(false);
     }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,9 +10,24 @@ import { useProjects } from "@/lib/hooks/useProjects";
 import { formatDistanceToNow } from "date-fns";
 import { ProjectSkeleton } from "@/components/loading/ProjectSkeleton";
 import { EmptyProjects } from "@/components/empty/EmptyProjects";
+import type { ProjectStatus } from "@/lib/db/projects";
+
+function getStatusBadgeVariant(status: ProjectStatus["status"]): "default" | "secondary" | "destructive" | "outline" {
+  switch (status) {
+    case "needs-analysis":
+      return "destructive";
+    case "pending-suggestions":
+      return "default";
+    case "up-to-date":
+      return "secondary";
+    default:
+      return "outline";
+  }
+}
 
 export default function DashboardPage() {
-  const { projects, loading } = useProjects();
+  const options = useMemo(() => ({ includeStatus: true }), []);
+  const { projectsWithStatus, loading } = useProjects(options);
 
   if (loading) {
     return (
@@ -38,22 +54,35 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {projects.length === 0 ? (
+      {projectsWithStatus.length === 0 ? (
         <EmptyProjects />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
+          {projectsWithStatus.map((project) => (
             <Link key={project.id} href={`/projects/${project.id}`}>
               <Card className="transition-smooth p-6 hover:shadow-md">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {project.name}
-                </h3>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {project.name}
+                  </h3>
+                  <Badge
+                    variant={getStatusBadgeVariant(project.projectStatus.status)}
+                    className="shrink-0"
+                  >
+                    {project.projectStatus.label}
+                  </Badge>
+                </div>
                 {project.description && (
                   <p className="mt-2 text-sm text-gray-600">
                     {project.description}
                   </p>
                 )}
-                <div className="mt-4 flex items-center gap-2">
+                <div className="mt-4 flex items-center gap-2 flex-wrap">
+                  {project.projectStatus.passRate !== undefined && (
+                    <Badge variant="outline" className="text-xs">
+                      {project.projectStatus.passRate}% pass rate
+                    </Badge>
+                  )}
                   {project.tags?.map((tag) => (
                     <Badge key={tag} variant="secondary">
                       {tag}

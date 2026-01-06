@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AnalysisResults } from "@/components/analysis/AnalysisResults";
 import { useAnalysis } from "@/lib/hooks/useAnalysis";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getProject } from "@/lib/db/projects";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
@@ -18,6 +19,8 @@ import { AnalysisSkeleton } from "@/components/loading/AnalysisSkeleton";
 import { EmptyTests } from "@/components/empty/EmptyTests";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/layout/BackButton";
+import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import type { Project } from "@/types";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -27,7 +30,30 @@ export default function ProjectDetailPage() {
     useAnalysis(projectId);
 
   const [systemPrompt, setSystemPrompt] = useState("");
+  const [project, setProject] = useState<Project | null>(null);
   const { toast } = useToast();
+
+  // Load project and system prompt
+  useEffect(() => {
+    async function loadProject() {
+      const proj = await getProject(projectId);
+      if (proj) {
+        setProject(proj);
+        // If no analysis exists yet, use the project's stored system prompt
+        if (!analysis && proj.systemPrompt) {
+          setSystemPrompt(proj.systemPrompt);
+        }
+      }
+    }
+    loadProject();
+  }, [projectId, analysis]);
+
+  // If analysis already exists, use its system prompt
+  useEffect(() => {
+    if (analysis) {
+      setSystemPrompt(analysis.systemPrompt);
+    }
+  }, [analysis]);
 
   const handleExportPrompt = (format: "txt" | "md" | "json") => {
     if (!analysis || format === "json") return;
@@ -81,6 +107,12 @@ export default function ProjectDetailPage() {
             <Button variant="outline">View History</Button>
           </Link>
         </div>
+
+        <Breadcrumb
+          projectId={projectId}
+          projectName={project?.name || "Project"}
+          currentPage="project"
+        />
 
         {!analysis && (
           <Card className="p-6 transition-smooth">

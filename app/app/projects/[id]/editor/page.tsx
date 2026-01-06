@@ -12,14 +12,18 @@ import { useSuggestions } from "@/lib/hooks/useSuggestions";
 import { useVersions } from "@/lib/hooks/useVersions";
 import { applyAcceptedSuggestions } from "@/lib/diff/applier";
 import { useState, useEffect } from "react";
-import { Download } from "lucide-react";
+import { Download, History, ArrowLeft } from "lucide-react";
+import { ToastAction } from "@/components/ui/toast";
 import { ExportDialog } from "@/components/export/ExportDialog";
 import { exportPrompt } from "@/lib/export/prompt";
 import { exportChangeReport } from "@/lib/export/report";
 import { getVersionsByProject } from "@/lib/db/versions";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/layout/BackButton";
+import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { AnalysisSkeleton } from "@/components/loading/AnalysisSkeleton";
+import { getProject } from "@/lib/db/projects";
+import type { Project } from "@/types";
 
 export default function EditorPage() {
   const params = useParams();
@@ -35,7 +39,19 @@ export default function EditorPage() {
   const [updatedPrompt, setUpdatedPrompt] = useState("");
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [project, setProject] = useState<Project | null>(null);
   const { toast } = useToast();
+
+  // Load project for breadcrumb
+  useEffect(() => {
+    async function loadProject() {
+      const proj = await getProject(projectId);
+      if (proj) {
+        setProject(proj);
+      }
+    }
+    loadProject();
+  }, [projectId]);
 
   const handleExportPrompt = (format: "txt" | "md" | "json") => {
     if (!analysis || format === "json") return;
@@ -131,7 +147,7 @@ export default function EditorPage() {
 
       const changesSummary = `Applied ${acceptedSuggestions.length} suggestion(s)`;
 
-      await addVersion({
+      const newVersion = await addVersion({
         content: result.updatedPrompt,
         createdBy: "system",
         appliedSuggestions: result.appliedSuggestions,
@@ -140,11 +156,27 @@ export default function EditorPage() {
       });
 
       toast({
-        title: "Version created",
-        description: "Your prompt has been updated.",
+        title: "Changes applied!",
+        description: `Version ${newVersion?.id ? "created" : "saved"} with ${acceptedSuggestions.length} change(s).`,
+        action: (
+          <div className="flex gap-2">
+            <ToastAction
+              altText="View History"
+              onClick={() => router.push(`/projects/${projectId}/history`)}
+            >
+              <History className="mr-1 h-3 w-3" />
+              History
+            </ToastAction>
+            <ToastAction
+              altText="Back to Project"
+              onClick={() => router.push(`/projects/${projectId}`)}
+            >
+              <ArrowLeft className="mr-1 h-3 w-3" />
+              Project
+            </ToastAction>
+          </div>
+        ),
       });
-
-      router.push(`/projects/${projectId}`);
     } catch (err: any) {
       setError(err.message || "Failed to apply changes");
       toast({
@@ -195,6 +227,12 @@ export default function EditorPage() {
             </Button>
           </div>
         </div>
+
+        <Breadcrumb
+          projectId={projectId}
+          projectName={project?.name || "Project"}
+          currentPage="editor"
+        />
 
         {error && (
           <Card className="border-red-200 bg-red-50 p-4 transition-smooth">

@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, User, Bot } from "lucide-react";
+import { Clock, User, Bot, Copy, Check } from "lucide-react";
 import type { PromptVersion } from "@/types";
 import { formatDistanceToNow } from "date-fns";
 
@@ -20,6 +21,18 @@ export function VersionTimeline({
   onCompare,
   selectedVersion,
 }: VersionTimelineProps) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyPrompt = async (version: PromptVersion) => {
+    try {
+      await navigator.clipboard.writeText(version.content);
+      setCopiedId(version.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (error) {
+      console.error("Failed to copy prompt:", error);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-gray-900">
@@ -57,7 +70,7 @@ export function VersionTimeline({
                   </div>
 
                   {version.changesSummary && (
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">
                       {version.changesSummary}
                     </p>
                   )}
@@ -78,6 +91,24 @@ export function VersionTimeline({
                 </div>
 
                 <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleCopyPrompt(version)}
+                    title="Copy prompt to clipboard"
+                  >
+                    {copiedId === version.id ? (
+                      <>
+                        <Check className="mr-1 h-3 w-3" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="mr-1 h-3 w-3" />
+                        Copy
+                      </>
+                    )}
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
