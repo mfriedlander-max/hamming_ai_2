@@ -142,12 +142,14 @@ export function AnalysisResults({
 
       {!selectedCategoryId && (
         <div>
-          <h2 className="mb-1 text-xl font-semibold text-gray-900">
+          <div className="mb-6 rounded-r border-l-4 border-blue-500 bg-blue-50 p-4">
+            <p className="font-medium text-blue-700">
+              Click a category below to view evidence and generate suggestions
+            </p>
+          </div>
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">
             Failure Categories ({analysis.categories.length})
           </h2>
-          <p className="mb-4 text-sm text-gray-600">
-            Click a category to view evidence & generate suggestions
-          </p>
           <div className="space-y-4">
             {analysis.categories.map((category) => (
               <FailureCategoryCard
