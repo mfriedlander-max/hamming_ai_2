@@ -143,4 +143,101 @@ describe('EvidenceViewer', () => {
       expect(excerptElement).toHaveClass('whitespace-pre-wrap')
     })
   })
+
+  describe('invalid test handling', () => {
+    it('should show warning banner when tests are invalid', () => {
+      const evidence = [createMockEvidence({ testId: 'invalid-test' })]
+      const invalidTest = createMockTest({
+        id: 'invalid-test',
+        transcript: undefined as unknown as string,
+      })
+
+      render(<EvidenceViewer evidence={evidence} tests={[invalidTest]} />)
+
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+      expect(screen.getByText('1 test(s) are invalid and were skipped.')).toBeInTheDocument()
+    })
+
+    it('should not show warning banner when all tests are valid', () => {
+      const evidence = [createMockEvidence()]
+      const tests = [createMockTest()]
+
+      render(<EvidenceViewer evidence={evidence} tests={tests} />)
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
+
+    it('should gray out invalid test cards with opacity-50', () => {
+      const evidence = [createMockEvidence({ testId: 'invalid-test' })]
+      const invalidTest = createMockTest({
+        id: 'invalid-test',
+        transcript: undefined as unknown as string,
+      })
+
+      render(<EvidenceViewer evidence={evidence} tests={[invalidTest]} />)
+
+      // The card should have the opacity-50 class
+      const cards = document.querySelectorAll('.opacity-50')
+      expect(cards.length).toBeGreaterThan(0)
+    })
+
+    it('should show warning icon for invalid tests', () => {
+      const evidence = [createMockEvidence({ testId: 'invalid-test' })]
+      const invalidTest = createMockTest({
+        id: 'invalid-test',
+        transcript: undefined as unknown as string,
+      })
+
+      render(<EvidenceViewer evidence={evidence} tests={[invalidTest]} />)
+
+      // Check for aria-label indicating invalid test
+      expect(screen.getByLabelText(/Invalid test: Missing transcript/)).toBeInTheDocument()
+    })
+
+    it('should not show transcript for invalid tests', () => {
+      const evidence = [createMockEvidence({ testId: 'invalid-test' })]
+      const invalidTest = createMockTest({
+        id: 'invalid-test',
+        transcript: undefined as unknown as string,
+      })
+
+      render(<EvidenceViewer evidence={evidence} tests={[invalidTest]} />)
+
+      expect(screen.queryByText('View full transcript')).not.toBeInTheDocument()
+    })
+
+    it('should show transcript for valid tests while hiding it for invalid ones', () => {
+      const evidence = [
+        createMockEvidence({ testId: 'valid-test', excerpt: 'Valid excerpt' }),
+        createMockEvidence({ testId: 'invalid-test', excerpt: 'Invalid excerpt' }),
+      ]
+      const tests = [
+        createMockTest({ id: 'valid-test', transcript: 'Valid transcript' }),
+        createMockTest({ id: 'invalid-test', transcript: undefined as unknown as string }),
+      ]
+
+      render(<EvidenceViewer evidence={evidence} tests={tests} />)
+
+      // Should only have one "View full transcript" for the valid test
+      const transcriptLinks = screen.getAllByText('View full transcript')
+      expect(transcriptLinks).toHaveLength(1)
+    })
+
+    it('should count correct number of invalid tests in summary', () => {
+      const evidence = [
+        createMockEvidence({ testId: 'invalid-1', excerpt: 'Excerpt 1' }),
+        createMockEvidence({ testId: 'invalid-2', excerpt: 'Excerpt 2' }),
+        createMockEvidence({ testId: 'valid-1', excerpt: 'Excerpt 3' }),
+      ]
+      const tests = [
+        createMockTest({ id: 'invalid-1', transcript: undefined as unknown as string }),
+        createMockTest({ id: 'invalid-2', transcript: null as unknown as string }),
+        createMockTest({ id: 'valid-1', transcript: 'Valid transcript' }),
+      ]
+
+      render(<EvidenceViewer evidence={evidence} tests={tests} />)
+
+      expect(screen.getByText('2 test(s) are invalid and were skipped.')).toBeInTheDocument()
+    })
+  })
 })

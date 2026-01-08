@@ -6,7 +6,8 @@ import { FailureCategoryCard } from "@/components/results/FailureCategoryCard";
 import { EvidenceViewer } from "@/components/results/EvidenceViewer";
 import { SuggestionCard } from "@/components/results/SuggestionCard";
 import { useSuggestions } from "@/lib/hooks/useSuggestions";
-import { useState } from "react";
+import { filterValidTests } from "@/lib/validation/testValidation";
+import { useState, useMemo } from "react";
 import type { Analysis, TestBatch } from "@/types";
 import Link from "next/link";
 
@@ -51,12 +52,29 @@ export function AnalysisResults({
   const hasSuggestions = suggestions.length > 0;
   const pendingCount = pendingSuggestions.length;
 
+  // Filter tests to only include valid ones for the selected category
+  const categoryTestValidation = useMemo(() => {
+    if (!selectedCategory) return { valid: [], invalid: [], hasValidTests: false };
+
+    // Get tests that are in this category (based on affectedTestIds or evidence)
+    const categoryTestIds = new Set(selectedCategory.affectedTestIds);
+    const categoryTests = testBatch.tests.filter((t) => categoryTestIds.has(t.id));
+    const { valid, invalid } = filterValidTests(categoryTests);
+
+    return {
+      valid,
+      invalid,
+      hasValidTests: valid.length > 0,
+    };
+  }, [selectedCategory, testBatch.tests]);
+
   const handleGenerateSuggestions = () => {
-    if (selectedCategory) {
+    if (selectedCategory && categoryTestValidation.hasValidTests) {
+      // Only pass valid tests to the suggestion generator
       generateForCategory(
         analysis.systemPrompt,
         selectedCategory,
-        testBatch.tests
+        categoryTestValidation.valid
       );
     }
   };
@@ -168,7 +186,12 @@ export function AnalysisResults({
               {categorySuggestions.length === 0 && (
                 <Button
                   onClick={handleGenerateSuggestions}
-                  disabled={generating}
+                  disabled={generating || !categoryTestValidation.hasValidTests}
+                  title={
+                    !categoryTestValidation.hasValidTests
+                      ? "All tests in this category are invalid"
+                      : undefined
+                  }
                 >
                   {generating ? "Generating..." : "Generate Suggestions"}
                 </Button>
