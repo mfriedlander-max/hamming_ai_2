@@ -226,40 +226,53 @@ export default function EditorPage() {
             <BackButton href={`/projects/${projectId}`} label="Back to project" />
             <h1 className="text-3xl font-bold text-gray-900">Prompt Editor</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Tertiary action: View History (ghost, separate) */}
             <ViewHistoryButton
               projectId={projectId}
               hasVersions={versions.length > 0}
-              variant="outline"
+              variant="ghost"
             />
-            <ExportDialog
-              onExport={handleExportPrompt}
-              formats={["txt", "md"]}
-              title="Export Updated Prompt"
-              description="Download the updated prompt"
-              disabled={!exportEnabled}
-              disabledMessage={EXPORT_DISABLED_MESSAGE}
-            />
-            <div className="relative group">
-              <Button
-                onClick={handleExportReport}
-                variant="outline"
+
+            {/* Visual separator between history and export/apply actions */}
+            {versions.length > 0 && (
+              <div className="h-6 w-px bg-gray-200" />
+            )}
+
+            {/* Secondary actions: Export group (outline) */}
+            <div className="flex items-center gap-2">
+              <ExportDialog
+                onExport={handleExportPrompt}
+                formats={["txt", "md"]}
+                title="Export Updated Prompt"
+                description="Download the updated prompt"
                 disabled={!exportEnabled}
-                title={!exportEnabled ? EXPORT_DISABLED_MESSAGE : undefined}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export Report
-              </Button>
-              {!exportEnabled && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                  {EXPORT_DISABLED_MESSAGE}
-                </div>
-              )}
+                disabledMessage={EXPORT_DISABLED_MESSAGE}
+              />
+              <div className="relative group">
+                <Button
+                  onClick={handleExportReport}
+                  variant="outline"
+                  disabled={!exportEnabled}
+                  title={!exportEnabled ? EXPORT_DISABLED_MESSAGE : undefined}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export Report
+                </Button>
+                {!exportEnabled && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                    {EXPORT_DISABLED_MESSAGE}
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Primary action: Apply Changes (default, prominent) */}
             <Button
               onClick={handleApply}
               disabled={acceptedCount === 0 || applying}
               size="lg"
+              className="ml-1"
             >
               {applying ? "Applying..." : `Apply ${acceptedCount} Change(s)`}
             </Button>
