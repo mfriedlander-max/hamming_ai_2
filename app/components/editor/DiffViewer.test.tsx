@@ -140,4 +140,34 @@ describe('DiffViewer', () => {
       })
     })
   })
+
+  describe('long lines', () => {
+    it('should have full-width highlighting classes for lines over 200 characters', () => {
+      const longLine = 'A'.repeat(250)
+      const differentLongLine = 'B'.repeat(250)
+
+      render(<DiffViewer original={longLine} modified={differentLongLine} />)
+
+      // Find the elements containing the long lines
+      const originalElement = screen.getByText(longLine).closest('div')
+      const modifiedElement = screen.getByText(differentLongLine).closest('div')
+
+      // Check that full-width highlighting classes are applied
+      expect(originalElement).toHaveClass('min-w-full', 'whitespace-pre', 'bg-red-100')
+      expect(modifiedElement).toHaveClass('min-w-full', 'whitespace-pre', 'bg-green-100')
+    })
+
+    it('should preserve whitespace in long lines', () => {
+      const lineWithSpaces = 'Start' + ' '.repeat(200) + 'End'
+
+      render(<DiffViewer original={lineWithSpaces} modified={lineWithSpaces} />)
+
+      const elements = screen.getAllByText((content) => content.includes('Start') && content.includes('End'))
+      expect(elements.length).toBe(2)
+
+      elements.forEach((el) => {
+        expect(el.closest('div')).toHaveClass('whitespace-pre')
+      })
+    })
+  })
 })

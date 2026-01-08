@@ -42,16 +42,16 @@ export function DiffViewer({ original, modified }: DiffViewerProps) {
       <div className="grid grid-cols-1 gap-0 md:grid-cols-2">
         <div className="bg-gray-50 p-4 md:border-r">
           <h3 className="mb-2 text-sm font-semibold text-gray-700">Original</h3>
-          <div className="max-h-[500px] overflow-y-auto">
-            <pre className="text-xs leading-relaxed text-gray-900">
+          <div className="max-h-[500px] overflow-auto">
+            <pre className="min-w-full text-xs leading-relaxed text-gray-900">
               {leftLines.map((line, idx) => (
                 <div
                   key={idx}
-                  className={
+                  className={`min-w-full whitespace-pre ${
                     line.type === "removed"
                       ? "bg-red-100 text-red-900"
                       : "text-gray-600"
-                  }
+                  }`}
                 >
                   <span className="mr-3 inline-block w-8 text-right text-gray-400">
                     {line.line ?? ""}
@@ -65,16 +65,16 @@ export function DiffViewer({ original, modified }: DiffViewerProps) {
 
         <div className="bg-white p-4">
           <h3 className="mb-2 text-sm font-semibold text-gray-700">Modified</h3>
-          <div className="max-h-[500px] overflow-y-auto">
-            <pre className="text-xs leading-relaxed text-gray-900">
+          <div className="max-h-[500px] overflow-auto">
+            <pre className="min-w-full text-xs leading-relaxed text-gray-900">
               {rightLines.map((line, idx) => (
                 <div
                   key={idx}
-                  className={
+                  className={`min-w-full whitespace-pre ${
                     line.type === "added"
                       ? "bg-green-100 text-green-900"
                       : "text-gray-600"
-                  }
+                  }`}
                 >
                   <span className="mr-3 inline-block w-8 text-right text-gray-400">
                     {line.line ?? ""}
