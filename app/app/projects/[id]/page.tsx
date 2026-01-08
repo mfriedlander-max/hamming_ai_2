@@ -15,6 +15,8 @@ import { ExportDialog } from "@/components/export/ExportDialog";
 import { exportPrompt } from "@/lib/export/prompt";
 import { exportAnalysisJSON } from "@/lib/export/analysis";
 import { Download } from "lucide-react";
+import { ViewHistoryButton } from "@/components/shared/ViewHistoryButton";
+import { useVersions } from "@/lib/hooks/useVersions";
 import { AnalysisSkeleton } from "@/components/loading/AnalysisSkeleton";
 import { EmptyTests } from "@/components/empty/EmptyTests";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +47,7 @@ export default function ProjectDetailPage() {
 
   const { analysis, testBatch, loading, analyzing, error, runAnalysis } =
     useAnalysis(projectId);
+  const { versions, loading: versionsLoading } = useVersions(projectId);
 
   const [systemPrompt, setSystemPrompt] = useState("");
   const [project, setProject] = useState<Project | null>(null);
@@ -120,9 +123,11 @@ export default function ProjectDetailPage() {
             <BackButton href="/dashboard" label="Back to dashboard" />
             <h1 className="text-3xl font-bold text-gray-900">Project Analysis</h1>
           </div>
-          <Link href={`/projects/${projectId}/history`}>
-            <Button variant="outline">View History</Button>
-          </Link>
+          <ViewHistoryButton
+            projectId={projectId}
+            hasVersions={versions.length > 0}
+            variant="outline"
+          />
         </div>
 
         <Breadcrumb

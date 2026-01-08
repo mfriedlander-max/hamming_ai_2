@@ -22,7 +22,7 @@ import { ProjectSkeleton } from "@/components/loading/ProjectSkeleton";
 import { EmptyProjects } from "@/components/empty/EmptyProjects";
 import { FolderCard } from "@/components/dashboard/FolderCard";
 import type { ProjectStatus } from "@/lib/db/projects";
-import { ChevronRight, FolderPlus } from "lucide-react";
+import { ChevronRight, FolderPlus, History } from "lucide-react";
 import { DEFAULT_FOLDER_ID, DEFAULT_FOLDER_NAME } from "@/types/folder";
 
 function getStatusBadgeVariant(status: ProjectStatus["status"]): "default" | "secondary" | "destructive" | "outline" {
@@ -188,8 +188,8 @@ export default function DashboardPage() {
           )}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredProjects.map((project) => (
-              <Link key={project.id} href={`/projects/${project.id}`}>
-                <Card className="transition-smooth p-6 hover:shadow-md">
+              <Card key={project.id} className="transition-smooth p-6 hover:shadow-md">
+                <Link href={`/projects/${project.id}`} className="block">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-lg font-semibold text-gray-900">
                       {project.name}
@@ -218,11 +218,23 @@ export default function DashboardPage() {
                       </Badge>
                     ))}
                   </div>
-                  <p className="mt-4 text-xs text-gray-500">
+                </Link>
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-xs text-gray-500">
                     Updated {formatDistanceToNow(project.updatedAt, { addSuffix: true })}
                   </p>
-                </Card>
-              </Link>
+                  {project.projectStatus.hasVersions && (
+                    <Link
+                      href={`/projects/${project.id}/history`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Button variant="ghost" size="icon" title="View History">
+                        <History className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </Card>
             ))}
           </div>
         </>

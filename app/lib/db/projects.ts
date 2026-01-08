@@ -105,6 +105,7 @@ export interface ProjectStatus {
   label: string;
   pendingCount?: number;
   passRate?: number;
+  hasVersions?: boolean;
 }
 
 export async function getProjectStatus(projectId: string): Promise<ProjectStatus> {
@@ -117,10 +118,18 @@ export async function getProjectStatus(projectId: string): Promise<ProjectStatus
 
   const latestAnalysis = analyses[0];
 
+  // Check if project has any versions (V0+)
+  const versions = await db.versions
+    .where("projectId")
+    .equals(projectId)
+    .toArray();
+  const hasVersions = versions.length > 0;
+
   if (!latestAnalysis) {
     return {
       status: "needs-analysis",
       label: "Needs Analysis",
+      hasVersions,
     };
   }
 
@@ -148,6 +157,7 @@ export async function getProjectStatus(projectId: string): Promise<ProjectStatus
       label: `${pendingSuggestions.length} Suggestion${pendingSuggestions.length === 1 ? "" : "s"} Pending`,
       pendingCount: pendingSuggestions.length,
       passRate,
+      hasVersions,
     };
   }
 
@@ -155,6 +165,7 @@ export async function getProjectStatus(projectId: string): Promise<ProjectStatus
     status: "up-to-date",
     label: "Up to Date",
     passRate,
+    hasVersions,
   };
 }
 
