@@ -258,6 +258,11 @@ Guidelines:
 - Provide clear reasoning tied to evidence
 - Only suggest changes that address THIS category
 
+CRITICAL: Test-Grounded Suggestions
+- Every suggestion MUST reference specific test IDs from the provided failed tests
+- Do not generate suggestions that are not directly traceable to a test failure
+- The linkedTestIds field must contain at least one test ID from the failed tests above
+
 ## Output Format (JSON):
 \`\`\`json
 {

@@ -39,6 +39,11 @@ export function SuggestionCard({
         <div className="flex items-start gap-3">
           <FileEdit className="h-5 w-5 text-gray-600" />
           <div className="flex-1">
+            {/* Test linkage shown prominently at top */}
+            <div className="mb-2 inline-flex items-center rounded-md bg-blue-50 px-2 py-1">
+              <TestLinkage testIds={suggestion.linkedTestIds} />
+            </div>
+
             <div className="flex items-center gap-2">
               <Badge className={typeColors[suggestion.type]}>
                 {suggestion.type}
@@ -54,10 +59,6 @@ export function SuggestionCard({
             <p className="mt-3 text-sm text-gray-900">
               <span className="font-medium">Reason:</span> {suggestion.reason}
             </p>
-
-            <div className="mt-3">
-              <TestLinkage testIds={suggestion.linkedTestIds} />
-            </div>
 
             <div className="mt-4 rounded bg-gray-50 p-3">
               <p className="text-xs font-medium text-gray-700">

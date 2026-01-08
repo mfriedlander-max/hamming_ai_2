@@ -16,6 +16,11 @@ export async function createSuggestion(data: {
   evidence: EvidenceSnippet[];
   originalPrompt: string;
 }): Promise<Suggestion> {
+  // Enforce test-grounded suggestions - every suggestion must be linked to at least one test
+  if (!data.linkedTestIds || data.linkedTestIds.length === 0) {
+    throw new Error('Suggestions must be linked to at least one test');
+  }
+
   const modifiedPrompt =
     data.type === "replace" && data.originalText
       ? data.originalPrompt.replace(data.originalText, data.proposedText)

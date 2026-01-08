@@ -1,16 +1,20 @@
 "use client";
 
+import { FileText } from "lucide-react";
+
 interface TestLinkageProps {
   testIds: string[];
 }
 
 export function TestLinkage({ testIds }: TestLinkageProps) {
+  if (!testIds || testIds.length === 0) {
+    return null;
+  }
+
   return (
-    <div>
-      <p className="text-xs font-medium text-gray-700">
-        Addresses {testIds.length} test(s):
-      </p>
-      <p className="mt-1 text-xs text-gray-600">{testIds.join(", ")}</p>
+    <div className="flex items-center gap-1 text-sm font-medium text-blue-600">
+      <FileText className="h-3 w-3" />
+      <span>From Test: {testIds.join(', ')}</span>
     </div>
   );
 }
