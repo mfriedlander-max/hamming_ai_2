@@ -10,6 +10,7 @@ import { VersionDiff } from "@/components/history/VersionDiff";
 import { AuditTrail } from "@/components/history/AuditTrail";
 import { useVersions } from "@/lib/hooks/useVersions";
 import { useAuditLog } from "@/lib/hooks/useAuditLog";
+import { canExportPrompt, EXPORT_DISABLED_MESSAGE } from "@/lib/utils/exportGating";
 import { useState, useEffect } from "react";
 import type { PromptVersion } from "@/types";
 import { ExportDialog } from "@/components/export/ExportDialog";
@@ -23,7 +24,7 @@ import { VersionSkeleton } from "@/components/loading/VersionSkeleton";
 import { EmptyVersions } from "@/components/empty/EmptyVersions";
 import { useToast } from "@/hooks/use-toast";
 import { getProject } from "@/lib/db/projects";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Download } from "lucide-react";
 
 export default function HistoryPage() {
   const params = useParams();
@@ -33,6 +34,9 @@ export default function HistoryPage() {
     useVersions(projectId);
   const { entries, loading: auditLoading, logAction, refresh: refreshAudit } =
     useAuditLog(projectId);
+
+  // Check if export is available (V1+ exists)
+  const exportEnabled = canExportPrompt(versions);
 
   const [selectedVersion, setSelectedVersion] = useState<PromptVersion | null>(
     null
@@ -221,12 +225,27 @@ export default function HistoryPage() {
                 formats={["txt", "md"]}
                 title="Export Latest Prompt"
                 description="Download the latest prompt version"
+                disabled={!exportEnabled}
+                disabledMessage={EXPORT_DISABLED_MESSAGE}
               />
             )}
             {latestAnalysis && latestTestBatch && versions.length >= 2 && (
-              <Button onClick={handleExportReport} variant="outline">
-                Export Report
-              </Button>
+              <div className="relative group">
+                <Button
+                  onClick={handleExportReport}
+                  variant="outline"
+                  disabled={!exportEnabled}
+                  title={!exportEnabled ? EXPORT_DISABLED_MESSAGE : undefined}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export Report
+                </Button>
+                {!exportEnabled && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                    {EXPORT_DISABLED_MESSAGE}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

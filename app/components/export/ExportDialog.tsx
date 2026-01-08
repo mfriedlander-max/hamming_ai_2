@@ -21,6 +21,8 @@ interface ExportDialogProps {
   title?: string;
   description?: string;
   formats?: Array<"txt" | "md" | "json">;
+  disabled?: boolean;
+  disabledMessage?: string;
 }
 
 export function ExportDialog({
@@ -29,6 +31,8 @@ export function ExportDialog({
   title = "Export",
   description = "Choose a format to export",
   formats = ["txt", "md", "json"],
+  disabled = false,
+  disabledMessage,
 }: ExportDialogProps) {
   const [selectedFormat, setSelectedFormat] = useState<"txt" | "md" | "json">(
     formats[0]
@@ -51,6 +55,23 @@ export function ExportDialog({
     md: "Markdown format with formatting preserved",
     json: "Structured data for programmatic use",
   };
+
+  // When disabled, show a disabled button with tooltip instead of dialog trigger
+  if (disabled) {
+    return (
+      <div className="relative group">
+        <Button variant="outline" disabled title={disabledMessage}>
+          <Download className="mr-2 h-4 w-4" />
+          Export
+        </Button>
+        {disabledMessage && (
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+            {disabledMessage}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
