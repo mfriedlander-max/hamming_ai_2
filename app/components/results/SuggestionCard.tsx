@@ -27,11 +27,14 @@ export function SuggestionCard({
     replace: "bg-blue-100 text-blue-800",
   };
 
-  const statusIcons = {
+  const statusIcons: Record<Suggestion["status"], React.ReactNode> = {
     pending: null,
     accepted: <CheckCircle className="h-5 w-5 text-green-600" />,
     rejected: <XCircle className="h-5 w-5 text-red-600" />,
     applied: <CheckCircle className="h-5 w-5 text-blue-600" />,
+    rejected_applied: <XCircle className="h-5 w-5 text-gray-500" />,
+    reverted_applied: <CheckCircle className="h-5 w-5 text-orange-500" />,
+    reverted_rejected: <XCircle className="h-5 w-5 text-orange-500" />,
   };
 
   return (

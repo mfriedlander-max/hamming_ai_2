@@ -60,6 +60,8 @@ export default function EditorPage() {
     acceptedCount,
     pendingCount,
     rejectedCount,
+    revertedAppliedCount,
+    revertedRejectedCount,
     applyableCount,
   } = useDraftSuggestions(suggestions);
 
@@ -186,6 +188,16 @@ export default function EditorPage() {
       }
 
       const totalApplied = result.appliedSuggestions.length + result.rejectedSuggestions.length;
+
+      // Prevent creating empty versions when all suggestions failed to apply
+      if (totalApplied === 0) {
+        toast({
+          title: "No changes applied",
+          description: "All suggestions failed to apply. They may have conflicts with the current prompt.",
+          variant: "destructive",
+        });
+        return;
+      }
       const changesSummary = `Applied ${result.appliedSuggestions.length} accepted, ${result.rejectedSuggestions.length} rejected`;
 
       // Creates a NEW version - prior versions are NEVER modified
@@ -195,6 +207,9 @@ export default function EditorPage() {
         appliedSuggestions: [...result.appliedSuggestions, ...result.rejectedSuggestions],
         changesSummary,
         analysisId: analysis.id,
+        // Track accepted vs rejected separately for rollback state restoration
+        acceptedSuggestionIds: result.appliedSuggestions,
+        rejectedSuggestionIds: result.rejectedSuggestions,
       });
 
       // Track which suggestions were reverted before applying
@@ -363,7 +378,7 @@ export default function EditorPage() {
             <Card className="p-4 transition-smooth">
               <p className="text-sm text-gray-600">
                 {applyableCount > 0
-                  ? `${acceptedCount} accepted, ${rejectedCount} rejected suggestion(s) will be applied.`
+                  ? `${applyableCount} change(s) will be applied: ${acceptedCount} accepted, ${rejectedCount} rejected${revertedAppliedCount + revertedRejectedCount > 0 ? `, ${revertedAppliedCount + revertedRejectedCount} reverted` : ""}.`
                   : "Accept or reject suggestions to preview changes."}
               </p>
             </Card>

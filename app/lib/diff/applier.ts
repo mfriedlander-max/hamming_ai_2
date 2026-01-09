@@ -55,12 +55,20 @@ export function applyAcceptedSuggestions(
 
   for (const suggestion of suggestionsToApply) {
     try {
-      updatedPrompt = applySingleSuggestion(updatedPrompt, suggestion);
+      // Only apply text changes for accepted suggestions, NOT rejected ones
+      // Rejected suggestions only get their status tracked (-> rejected_applied)
+      const isAccepted = suggestion.status === "accepted" ||
+                         suggestion.status === "applied" ||
+                         suggestion.status === "reverted_applied";
+
+      if (isAccepted) {
+        updatedPrompt = applySingleSuggestion(updatedPrompt, suggestion);
+      }
+
       // Track which go to "applied" vs "rejected_applied"
-      // reverted_applied -> applied, reverted_rejected -> rejected_applied
-      if (suggestion.status === "accepted" || suggestion.status === "applied" || suggestion.status === "reverted_applied") {
+      if (isAccepted) {
         appliedIds.push(suggestion.id);
-      } else if (suggestion.status === "rejected" || suggestion.status === "rejected_applied" || suggestion.status === "reverted_rejected") {
+      } else {
         rejectedIds.push(suggestion.id);
       }
     } catch (error) {
@@ -94,6 +102,10 @@ function applySingleSuggestion(prompt: string, suggestion: Suggestion): string {
       return prompt.replace(suggestion.originalText, "");
 
     case "add":
+      // Idempotency check: skip if text already exists in prompt
+      if (prompt.includes(suggestion.proposedText)) {
+        return prompt;
+      }
       return prompt.trim() + "\n\n" + suggestion.proposedText;
 
     default:

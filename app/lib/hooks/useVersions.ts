@@ -31,6 +31,8 @@ export function useVersions(projectId: string) {
     appliedSuggestions?: string[];
     changesSummary?: string;
     analysisId?: string;
+    acceptedSuggestionIds?: string[];
+    rejectedSuggestionIds?: string[];
   }) => {
     const version = await createVersion({
       projectId,

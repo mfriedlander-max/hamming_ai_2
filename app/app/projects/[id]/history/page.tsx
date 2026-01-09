@@ -24,6 +24,7 @@ import { VersionSkeleton } from "@/components/loading/VersionSkeleton";
 import { EmptyVersions } from "@/components/empty/EmptyVersions";
 import { useToast } from "@/hooks/use-toast";
 import { getProject } from "@/lib/db/projects";
+import { resetSuggestionsForAnalysis, restoreSuggestionStatesForVersion } from "@/lib/db/suggestions";
 import { Copy, Check, Download } from "lucide-react";
 
 export default function HistoryPage() {
@@ -172,6 +173,24 @@ export default function HistoryPage() {
         changesSummary: `Rollback to version ${selectedVersion.versionNumber}`,
       });
 
+      // Restore suggestion states to match the target version
+      // Find analysis from any version that has one (rollback versions don't have analysisId)
+      const analysisId = latestAnalysis?.id ||
+        versions.find(v => v.analysisId)?.analysisId;
+      if (analysisId) {
+        // If the target version has acceptedSuggestionIds/rejectedSuggestionIds, restore to that state
+        // Otherwise, reset all to pending (for versions created before this feature)
+        if (selectedVersion.acceptedSuggestionIds || selectedVersion.rejectedSuggestionIds) {
+          await restoreSuggestionStatesForVersion(
+            analysisId,
+            selectedVersion.acceptedSuggestionIds || [],
+            selectedVersion.rejectedSuggestionIds || []
+          );
+        } else {
+          await resetSuggestionsForAnalysis(analysisId);
+        }
+      }
+
       await logAction({
         action: "rollback_version",
         actor: "user",
@@ -186,9 +205,13 @@ export default function HistoryPage() {
       await refresh();
       await refreshAudit();
       setSelectedVersion(null);
+
+      const hasStoredStates = selectedVersion.acceptedSuggestionIds || selectedVersion.rejectedSuggestionIds;
       toast({
         title: "Rollback complete",
-        description: `Version ${selectedVersion.versionNumber} restored.`,
+        description: hasStoredStates
+          ? `Version ${selectedVersion.versionNumber} restored with suggestion states.`
+          : `Version ${selectedVersion.versionNumber} restored. Suggestions reset to pending.`,
       });
     } catch (error: any) {
       setRollbackError(error.message || "Failed to rollback version");

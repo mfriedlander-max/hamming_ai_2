@@ -116,3 +116,71 @@ export async function markSuggestionsAsApplied(
     }
   });
 }
+
+/**
+ * Reset all suggestions for an analysis to "pending" status.
+ * Used when rolling back to a version that has no acceptedSuggestionIds/rejectedSuggestionIds
+ * (i.e., versions created before rollback state tracking was added).
+ */
+export async function resetSuggestionsForAnalysis(
+  analysisId: string
+): Promise<number> {
+  const suggestions = await db.suggestions
+    .where("analysisId")
+    .equals(analysisId)
+    .toArray();
+
+  if (suggestions.length === 0) return 0;
+
+  await db.transaction("rw", db.suggestions, async () => {
+    for (const suggestion of suggestions) {
+      await db.suggestions.update(suggestion.id, {
+        status: "pending",
+        reviewedAt: undefined,
+        reviewNotes: undefined,
+      });
+    }
+  });
+
+  return suggestions.length;
+}
+
+/**
+ * Restore suggestion states to match a specific version.
+ * Used when rolling back to restore the exact state at that version.
+ * - Suggestions in acceptedIds -> "applied"
+ * - Suggestions in rejectedIds -> "rejected_applied"
+ * - All other suggestions -> "pending"
+ */
+export async function restoreSuggestionStatesForVersion(
+  analysisId: string,
+  acceptedIds: string[],
+  rejectedIds: string[]
+): Promise<void> {
+  const suggestions = await db.suggestions
+    .where("analysisId")
+    .equals(analysisId)
+    .toArray();
+
+  if (suggestions.length === 0) return;
+
+  const acceptedSet = new Set(acceptedIds);
+  const rejectedSet = new Set(rejectedIds);
+
+  await db.transaction("rw", db.suggestions, async () => {
+    for (const suggestion of suggestions) {
+      let newStatus: "pending" | "applied" | "rejected_applied";
+      if (acceptedSet.has(suggestion.id)) {
+        newStatus = "applied";
+      } else if (rejectedSet.has(suggestion.id)) {
+        newStatus = "rejected_applied";
+      } else {
+        newStatus = "pending";
+      }
+      await db.suggestions.update(suggestion.id, {
+        status: newStatus,
+        reviewedAt: newStatus === "pending" ? undefined : Date.now(),
+      });
+    }
+  });
+}

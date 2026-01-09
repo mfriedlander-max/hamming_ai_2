@@ -9,6 +9,9 @@ export interface PromptVersion {
   appliedSuggestions?: string[];
   changesSummary?: string;
   analysisId?: string;
+  // Track accepted vs rejected distinctly for rollback state restoration
+  acceptedSuggestionIds?: string[];
+  rejectedSuggestionIds?: string[];
 }
 
 export interface AuditEntry {

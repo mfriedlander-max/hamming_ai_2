@@ -11,6 +11,8 @@ export async function createVersion(data: {
   appliedSuggestions?: string[];
   changesSummary?: string;
   analysisId?: string;
+  acceptedSuggestionIds?: string[];
+  rejectedSuggestionIds?: string[];
 }): Promise<PromptVersion> {
   const existingVersions = await getVersionsByProject(data.projectId);
   // V0-based versioning: first version is 0, subsequent versions are 1, 2, 3...
@@ -27,6 +29,8 @@ export async function createVersion(data: {
     appliedSuggestions: data.appliedSuggestions,
     changesSummary: data.changesSummary,
     analysisId: data.analysisId,
+    acceptedSuggestionIds: data.acceptedSuggestionIds,
+    rejectedSuggestionIds: data.rejectedSuggestionIds,
   };
 
   await db.versions.add(version);
