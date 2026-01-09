@@ -5,6 +5,7 @@ import type { Suggestion, FailureCategory, TestResult } from "@/types";
 import {
   getSuggestionsByAnalysis,
   createSuggestion,
+  markSuggestionsAsApplied as dbMarkSuggestionsAsApplied,
 } from "@/lib/db/suggestions";
 
 export function useSuggestions(analysisId: string) {
@@ -86,12 +87,23 @@ export function useSuggestions(analysisId: string) {
     }
   };
 
+  const markAsApplied = async (suggestionIds: string[]) => {
+    await dbMarkSuggestionsAsApplied(suggestionIds);
+    // Update local state to reflect applied status
+    setSuggestions((prev) =>
+      prev.map((s) =>
+        suggestionIds.includes(s.id) ? { ...s, status: "applied" as const } : s
+      )
+    );
+  };
+
   return {
     suggestions,
     loading,
     generating,
     error,
     generateForCategory,
+    markAsApplied,
     refresh: loadSuggestions,
   };
 }

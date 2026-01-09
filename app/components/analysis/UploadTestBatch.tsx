@@ -14,9 +14,10 @@ interface UploadTestBatchProps {
     fileName: string,
     fileType: "json" | "csv" | "excel"
   ) => void;
+  disabled?: boolean;
 }
 
-export function UploadTestBatch({ onUpload }: UploadTestBatchProps) {
+export function UploadTestBatch({ onUpload, disabled }: UploadTestBatchProps) {
   const [parsing, setParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [parsedData, setParsedData] = useState<{
@@ -74,13 +75,18 @@ export function UploadTestBatch({ onUpload }: UploadTestBatchProps) {
       "application/vnd.ms-excel": [".xls"],
     },
     multiple: false,
+    disabled,
   });
 
   return (
     <div className="space-y-4">
       <div
         {...getRootProps()}
-        className={`rounded-xl border bg-card text-card-foreground shadow transition-smooth cursor-pointer border-2 border-dashed p-6 text-center md:p-12 ${
+        className={`rounded-xl border bg-card text-card-foreground shadow transition-smooth border-2 border-dashed p-6 text-center md:p-12 ${
+          disabled
+            ? "cursor-not-allowed opacity-50"
+            : "cursor-pointer"
+        } ${
           isDragActive
             ? "border-blue-500 bg-blue-50"
             : "border-gray-300 hover:border-gray-400"

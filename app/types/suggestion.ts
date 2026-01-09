@@ -11,7 +11,7 @@ export interface Suggestion {
   reason: string;
   linkedTestIds: string[];
   evidence: EvidenceSnippet[];
-  status: "pending" | "accepted" | "rejected";
+  status: "pending" | "accepted" | "rejected" | "applied" | "rejected_applied" | "reverted_applied" | "reverted_rejected";
   reviewedAt?: number;
   reviewNotes?: string;
   diffPatch?: string;

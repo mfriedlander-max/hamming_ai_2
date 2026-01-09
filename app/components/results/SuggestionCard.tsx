@@ -31,6 +31,7 @@ export function SuggestionCard({
     pending: null,
     accepted: <CheckCircle className="h-5 w-5 text-green-600" />,
     rejected: <XCircle className="h-5 w-5 text-red-600" />,
+    applied: <CheckCircle className="h-5 w-5 text-blue-600" />,
   };
 
   return (

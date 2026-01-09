@@ -100,6 +100,41 @@ export async function deleteProject(id: string): Promise<void> {
   await db.projects.delete(id);
 }
 
+export async function renameProject(id: string, newName: string): Promise<void> {
+  await db.projects.update(id, {
+    name: newName,
+    updatedAt: Date.now(),
+  });
+}
+
+export async function deleteProjectWithRelated(id: string): Promise<void> {
+  await db.transaction("rw", [db.projects, db.analyses, db.suggestions, db.versions, db.testBatches, db.auditLog], async () => {
+    // 1. Get all analyses for this project
+    const analyses = await db.analyses.where("projectId").equals(id).toArray();
+    const analysisIds = analyses.map((a) => a.id);
+
+    // 2. Delete suggestions for all analyses
+    if (analysisIds.length > 0) {
+      await db.suggestions.where("analysisId").anyOf(analysisIds).delete();
+    }
+
+    // 3. Delete analyses
+    await db.analyses.where("projectId").equals(id).delete();
+
+    // 4. Delete versions
+    await db.versions.where("projectId").equals(id).delete();
+
+    // 5. Delete test batches
+    await db.testBatches.where("projectId").equals(id).delete();
+
+    // 6. Delete audit log entries
+    await db.auditLog.where("projectId").equals(id).delete();
+
+    // 7. Delete the project itself
+    await db.projects.delete(id);
+  });
+}
+
 export interface ProjectStatus {
   status: "needs-analysis" | "pending-suggestions" | "up-to-date";
   label: string;
@@ -180,4 +215,38 @@ export async function getAllProjectsWithStatus(): Promise<
     })
   );
   return projectsWithStatus;
+}
+
+export async function moveProjectToFolder(
+  projectId: string,
+  targetFolderId: string
+): Promise<void> {
+  await db.projects.update(projectId, {
+    folderId: targetFolderId,
+    updatedAt: Date.now(),
+  });
+}
+
+export async function updateProjectOrder(
+  projectId: string,
+  displayOrder: number
+): Promise<void> {
+  await db.projects.update(projectId, {
+    displayOrder,
+    updatedAt: Date.now(),
+  });
+}
+
+export async function reorderProjects(
+  updates: Array<{ id: string; displayOrder: number }>
+): Promise<void> {
+  await db.transaction("rw", db.projects, async () => {
+    const now = Date.now();
+    for (const update of updates) {
+      await db.projects.update(update.id, {
+        displayOrder: update.displayOrder,
+        updatedAt: now,
+      });
+    }
+  });
 }

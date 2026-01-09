@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DiffViewer } from "@/components/editor/DiffViewer";
 import { PromptPreview } from "@/components/editor/PromptPreview";
-import { SuggestionPanel } from "@/components/editor/SuggestionPanel";
+import { CategorizedSuggestionPanel } from "@/components/editor/CategorizedSuggestionPanel";
+import { AnalysisSummaryCard } from "@/components/editor/AnalysisSummaryCard";
 import { useAnalysis } from "@/lib/hooks/useAnalysis";
 import { useSuggestions } from "@/lib/hooks/useSuggestions";
 import { useDraftSuggestions } from "@/lib/hooks/useDraftSuggestions";
@@ -34,11 +35,20 @@ export default function EditorPage() {
   const projectId = params.id as string;
 
   const { analysis, testBatch } = useAnalysis(projectId);
-  const { suggestions } = useSuggestions(analysis?.id || "");
-  const { versions, addVersion } = useVersions(projectId);
+  const { suggestions, markAsApplied } = useSuggestions(analysis?.id || "");
+  const { versions, addVersion, loading: versionsLoading } = useVersions(projectId);
 
   // Check if export is available (V1+ exists)
   const exportEnabled = canExportPrompt(versions);
+
+  // Get latest version content as baseline for creating new versions
+  // Only compute when versions are fully loaded to avoid showing stale data
+  const latestVersion = !versionsLoading && versions.length > 0 ? versions[versions.length - 1] : null;
+  const baselinePrompt = latestVersion?.content || analysis?.systemPrompt || "";
+
+  // For diff preview, use the latest version as baseline
+  // After Apply, this updates so the diff only shows unapplied changes
+  const originalPrompt = baselinePrompt;
 
   // Use draft suggestions for local, reversible state management
   const {
@@ -46,8 +56,11 @@ export default function EditorPage() {
     toggleAccept,
     setStatus,
     isDraftModified,
+    getOriginalStatus,
     acceptedCount,
     pendingCount,
+    rejectedCount,
+    applyableCount,
   } = useDraftSuggestions(suggestions);
 
   const [updatedPrompt, setUpdatedPrompt] = useState("");
@@ -116,11 +129,14 @@ export default function EditorPage() {
   };
 
   // Update preview based on draft suggestions (local state, instant updates)
+  // Uses baselinePrompt (latest version) as originalPrompt
+  // Only applies pending decisions (accepted/rejected) - applied suggestions are already in baseline
   useEffect(() => {
-    if (analysis && draftSuggestions.length > 0) {
+    if (originalPrompt && draftSuggestions.length > 0) {
       const result = applyAcceptedSuggestions(
-        analysis.systemPrompt,
+        originalPrompt,
         draftSuggestions
+        // Don't include applied suggestions - they're already in the baseline
       );
       if (result.success) {
         setUpdatedPrompt(result.updatedPrompt);
@@ -128,27 +144,28 @@ export default function EditorPage() {
       } else if (result.conflicts) {
         setError(`Conflicts detected: ${result.conflicts.length} suggestion(s)`);
       } else {
-        // No accepted suggestions - show original prompt
-        setUpdatedPrompt(analysis.systemPrompt);
+        // No pending decisions - show baseline prompt (no changes)
+        setUpdatedPrompt(originalPrompt);
         setError(null);
       }
-    } else if (analysis) {
-      setUpdatedPrompt(analysis.systemPrompt);
+    } else if (originalPrompt) {
+      setUpdatedPrompt(originalPrompt);
     }
-  }, [analysis, draftSuggestions]);
+  }, [originalPrompt, draftSuggestions]);
 
   const handleApply = async () => {
     if (!analysis) return;
 
-    if (!window.confirm("Apply accepted suggestions to create a new version?")) {
+    if (!window.confirm("Apply decided suggestions to create a new version?")) {
       return;
     }
 
     setApplying(true);
     try {
       // Use draftSuggestions for applying changes (creates NEW version, never mutates old)
+      // Apply from baselinePrompt (latest version), not analysis.systemPrompt (original)
       const result = applyAcceptedSuggestions(
-        analysis.systemPrompt,
+        baselinePrompt,
         draftSuggestions
       );
 
@@ -157,28 +174,63 @@ export default function EditorPage() {
           setError(
             `Cannot apply: ${result.conflicts.length} conflicting suggestion(s)`
           );
+        } else {
+          // No decided suggestions
+          toast({
+            title: "No changes to apply",
+            description: "Accept or reject at least one suggestion first.",
+            variant: "destructive",
+          });
         }
         return;
       }
 
-      const acceptedSuggestions = draftSuggestions.filter(
-        (s) => s.status === "accepted"
-      );
-
-      const changesSummary = `Applied ${acceptedSuggestions.length} suggestion(s)`;
+      const totalApplied = result.appliedSuggestions.length + result.rejectedSuggestions.length;
+      const changesSummary = `Applied ${result.appliedSuggestions.length} accepted, ${result.rejectedSuggestions.length} rejected`;
 
       // Creates a NEW version - prior versions are NEVER modified
       const newVersion = await addVersion({
         content: result.updatedPrompt,
         createdBy: "system",
-        appliedSuggestions: result.appliedSuggestions,
+        appliedSuggestions: [...result.appliedSuggestions, ...result.rejectedSuggestions],
         changesSummary,
         analysisId: analysis.id,
       });
 
+      // Track which suggestions were reverted before applying
+      // These must return to pending regardless of applier result
+      // (applier may fail on reverted suggestions, so they won't appear in result arrays)
+      const revertedSuggestions = draftSuggestions.filter(
+        s => s.status === "reverted_applied" || s.status === "reverted_rejected"
+      );
+      const revertedIds = new Set(revertedSuggestions.map(s => s.id));
+
+      // First, set ALL reverted suggestions to pending
+      // They won't be in result arrays because applier throws errors on them
+      revertedSuggestions.forEach((s) => {
+        setStatus(s.id, "pending");
+      });
+
+      // Update local draft state for non-reverted suggestions:
+      // - accepted -> applied
+      // - rejected -> rejected_applied
+      result.appliedSuggestions.forEach((id) => {
+        if (!revertedIds.has(id)) {
+          setStatus(id, "applied");
+        }
+      });
+      result.rejectedSuggestions.forEach((id) => {
+        if (!revertedIds.has(id)) {
+          setStatus(id, "rejected_applied");
+        }
+      });
+
+      // Mark in database as well
+      await markAsApplied([...result.appliedSuggestions, ...result.rejectedSuggestions]);
+
       toast({
         title: "Changes applied!",
-        description: `Version ${newVersion?.id ? "created" : "saved"} with ${acceptedSuggestions.length} change(s).`,
+        description: `Version ${newVersion?.id ? "created" : "saved"} with ${totalApplied} change(s).`,
         action: (
           <div className="flex gap-2">
             <ToastAction
@@ -189,11 +241,11 @@ export default function EditorPage() {
               History
             </ToastAction>
             <ToastAction
-              altText="Back to Project"
-              onClick={() => router.push(`/projects/${projectId}`)}
+              altText="Back to Dashboard"
+              onClick={() => router.push("/dashboard")}
             >
               <ArrowLeft className="mr-1 h-3 w-3" />
-              Project
+              Dashboard
             </ToastAction>
           </div>
         ),
@@ -210,7 +262,7 @@ export default function EditorPage() {
     }
   };
 
-  if (!analysis) {
+  if (!analysis || versionsLoading) {
     return (
       <PageContainer>
         <AnalysisSkeleton />
@@ -223,7 +275,7 @@ export default function EditorPage() {
       <div className="space-y-6">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <BackButton href={`/projects/${projectId}`} label="Back to project" />
+            <BackButton href="/dashboard" label="Back to dashboard" />
             <h1 className="text-3xl font-bold text-gray-900">Prompt Editor</h1>
           </div>
           <div className="flex items-center gap-3">
@@ -270,11 +322,11 @@ export default function EditorPage() {
             {/* Primary action: Apply Changes (default, prominent) */}
             <Button
               onClick={handleApply}
-              disabled={acceptedCount === 0 || applying}
+              disabled={applyableCount === 0 || applying}
               size="lg"
               className="ml-1"
             >
-              {applying ? "Applying..." : `Apply ${acceptedCount} Change(s)`}
+              {applying ? "Applying..." : `Apply ${applyableCount} Change(s)`}
             </Button>
           </div>
         </div>
@@ -285,6 +337,8 @@ export default function EditorPage() {
           currentPage="editor"
         />
 
+        {testBatch && <AnalysisSummaryCard testBatch={testBatch} />}
+
         {error && (
           <Card className="border-red-200 bg-red-50 p-4 transition-smooth">
             <p className="text-sm text-red-900">{error}</p>
@@ -293,11 +347,13 @@ export default function EditorPage() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-1 lg:sticky lg:top-24 lg:self-start">
-            <SuggestionPanel
+            <CategorizedSuggestionPanel
+              categories={analysis.categories}
               suggestions={draftSuggestions}
               onToggleAccept={toggleAccept}
               onSetStatus={setStatus}
               isDraftModified={isDraftModified}
+              getOriginalStatus={getOriginalStatus}
               acceptedCount={acceptedCount}
               pendingCount={pendingCount}
             />
@@ -306,13 +362,13 @@ export default function EditorPage() {
           <div className="space-y-6 lg:col-span-2">
             <Card className="p-4 transition-smooth">
               <p className="text-sm text-gray-600">
-                {acceptedCount > 0
-                  ? `${acceptedCount} accepted suggestion(s) will be applied.`
-                  : "Accept suggestions to preview changes."}
+                {applyableCount > 0
+                  ? `${acceptedCount} accepted, ${rejectedCount} rejected suggestion(s) will be applied.`
+                  : "Accept or reject suggestions to preview changes."}
               </p>
             </Card>
             <DiffViewer
-              original={analysis.systemPrompt}
+              original={originalPrompt}
               modified={updatedPrompt}
             />
             <PromptPreview content={updatedPrompt} />

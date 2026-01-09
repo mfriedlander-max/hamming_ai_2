@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useDroppable } from "@dnd-kit/core";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +41,11 @@ export function FolderCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const [newName, setNewName] = useState(folder.name);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Register folder as a drop target for drag-and-drop
+  const { setNodeRef, isOver } = useDroppable({
+    id: folder.id,
+  });
 
   const isDefaultFolder = folder.id === DEFAULT_FOLDER_ID;
 
@@ -84,7 +91,11 @@ export function FolderCard({
   return (
     <>
       <Card
-        className="transition-smooth p-6 hover:shadow-md cursor-pointer group"
+        ref={setNodeRef}
+        className={cn(
+          "transition-smooth p-6 hover:shadow-md cursor-pointer group",
+          isOver && "ring-2 ring-primary ring-offset-2 bg-primary/5"
+        )}
         onClick={handleCardClick}
         onKeyDown={handleKeyDown}
         role="button"

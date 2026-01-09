@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 interface PromptInputProps {
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
-export function PromptInput({ value, onChange }: PromptInputProps) {
+export function PromptInput({ value, onChange, disabled }: PromptInputProps) {
   return (
     <div className="space-y-2">
       <Label htmlFor="system-prompt" className="text-base font-semibold">
@@ -21,6 +22,7 @@ export function PromptInput({ value, onChange }: PromptInputProps) {
         placeholder="Paste your current system prompt here..."
         className="min-h-[200px] font-mono text-sm"
         aria-describedby="system-prompt-help"
+        disabled={disabled}
       />
       <p id="system-prompt-help" className="text-xs text-gray-500">
         This is the prompt you want to analyze and improve

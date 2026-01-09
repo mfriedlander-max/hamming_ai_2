@@ -83,7 +83,7 @@ export function AnalysisResults({
     <div className="space-y-6">
       <Card className="p-6 transition-smooth">
         <h2 className="text-xl font-semibold text-gray-900">Analysis Summary</h2>
-        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-6">
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-5">
           <div>
             <p className="text-sm text-gray-600">Total Tests</p>
             <p className="text-2xl font-bold text-gray-900">
@@ -105,12 +105,6 @@ export function AnalysisResults({
           <div>
             <p className="text-sm text-gray-600">Pass Rate</p>
             <p className="text-2xl font-bold text-gray-900">{passRate}%</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Model</p>
-            <p className="text-sm font-semibold text-gray-900">
-              {analysis.metadata.modelUsed}
-            </p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Duration</p>

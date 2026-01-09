@@ -1,206 +1,26 @@
 "use client";
 
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { AnalysisResults } from "@/components/analysis/AnalysisResults";
-import { useAnalysis } from "@/lib/hooks/useAnalysis";
-import { useState, useEffect, useCallback } from "react";
-import { getProject } from "@/lib/db/projects";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import Link from "next/link";
-import { ExportDialog } from "@/components/export/ExportDialog";
-import { exportPrompt } from "@/lib/export/prompt";
-import { exportAnalysisJSON } from "@/lib/export/analysis";
-import { Download } from "lucide-react";
-import { ViewHistoryButton } from "@/components/shared/ViewHistoryButton";
-import { useVersions } from "@/lib/hooks/useVersions";
-import { AnalysisSkeleton } from "@/components/loading/AnalysisSkeleton";
-import { EmptyTests } from "@/components/empty/EmptyTests";
-import { useToast } from "@/hooks/use-toast";
-import { BackButton } from "@/components/layout/BackButton";
-import { Breadcrumb } from "@/components/layout/Breadcrumb";
-import type { Project } from "@/types";
+import { Loader2 } from "lucide-react";
 
-export default function ProjectDetailPage() {
+export default function ProjectRedirect() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const projectId = params.id as string;
 
-  // Get category from URL param
-  const selectedCategoryId = searchParams.get("category");
-
-  // Update URL when category changes
-  const setSelectedCategoryId = useCallback((categoryId: string | null) => {
-    const newParams = new URLSearchParams(searchParams.toString());
-    if (categoryId) {
-      newParams.set("category", categoryId);
-    } else {
-      newParams.delete("category");
-    }
-    const queryString = newParams.toString();
-    router.replace(`/projects/${projectId}${queryString ? `?${queryString}` : ""}`, { scroll: false });
-  }, [projectId, router, searchParams]);
-
-  const { analysis, testBatch, loading, analyzing, error, runAnalysis } =
-    useAnalysis(projectId);
-  const { versions, loading: versionsLoading } = useVersions(projectId);
-
-  const [systemPrompt, setSystemPrompt] = useState("");
-  const [project, setProject] = useState<Project | null>(null);
-  const { toast } = useToast();
-
-  // Load project and system prompt
   useEffect(() => {
-    async function loadProject() {
-      const proj = await getProject(projectId);
-      if (proj) {
-        setProject(proj);
-        // If no analysis exists yet, use the project's stored system prompt
-        if (!analysis && proj.systemPrompt) {
-          setSystemPrompt(proj.systemPrompt);
-        }
-      }
-    }
-    loadProject();
-  }, [projectId, analysis]);
-
-  // If analysis already exists, use its system prompt
-  useEffect(() => {
-    if (analysis) {
-      setSystemPrompt(analysis.systemPrompt);
-    }
-  }, [analysis]);
-
-  const handleExportPrompt = (format: "txt" | "md" | "json") => {
-    if (!analysis || format === "json") return;
-    exportPrompt(analysis.systemPrompt, `prompt-original-${Date.now()}`, format);
-    toast({
-      title: "Export complete",
-      description: "Prompt file downloaded.",
-    });
-  };
-
-  const handleExportAnalysis = () => {
-    if (!analysis || !testBatch) return;
-    exportAnalysisJSON(analysis, testBatch, `analysis-${Date.now()}`);
-    toast({
-      title: "Export complete",
-      description: "Analysis JSON downloaded.",
-    });
-  };
-
-  if (loading) {
-    return (
-      <PageContainer>
-        <AnalysisSkeleton />
-      </PageContainer>
-    );
-  }
-
-  if (!testBatch) {
-    return (
-      <PageContainer>
-        <EmptyTests />
-      </PageContainer>
-    );
-  }
-
-  const handleAnalyze = () => {
-    if (systemPrompt.trim()) {
-      runAnalysis(systemPrompt);
-    }
-  };
+    router.replace(`/projects/${projectId}/editor`);
+  }, [router, projectId]);
 
   return (
     <PageContainer>
-      <div className="space-y-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <BackButton href="/dashboard" label="Back to dashboard" />
-            <h1 className="text-3xl font-bold text-gray-900">Project Analysis</h1>
-          </div>
-          <ViewHistoryButton
-            projectId={projectId}
-            hasVersions={versions.length > 0}
-            variant="outline"
-          />
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="flex items-center gap-3 text-gray-600">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Redirecting to editor...</span>
         </div>
-
-        <Breadcrumb
-          projectId={projectId}
-          projectName={project?.name || "Project"}
-          currentPage="project"
-        />
-
-        {!analysis && (
-          <Card className="p-6 transition-smooth">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="prompt">System Prompt to Analyze</Label>
-                <Textarea
-                  id="prompt"
-                  value={systemPrompt}
-                  onChange={(e) => setSystemPrompt(e.target.value)}
-                  placeholder="Paste your system prompt here..."
-                  className="mt-2 min-h-[200px] font-mono text-sm"
-                  aria-describedby="prompt-help"
-                />
-                <p id="prompt-help" className="mt-2 text-xs text-gray-500">
-                  Provide the system prompt you want analyzed.
-                </p>
-              </div>
-              <Button
-                onClick={handleAnalyze}
-                disabled={!systemPrompt.trim() || analyzing}
-              >
-                {analyzing ? "Analyzing..." : "Run Analysis"}
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {analyzing && (
-          <Card className="p-8 text-center transition-smooth" role="status" aria-live="polite">
-            <p className="text-lg text-gray-600">Analyzing test failures...</p>
-            <p className="mt-2 text-sm text-gray-500">
-              Claude is categorizing failures and extracting evidence
-            </p>
-          </Card>
-        )}
-
-        {error && (
-          <Card className="border-red-200 bg-red-50 p-6 transition-smooth">
-            <p className="font-medium text-red-900">Analysis Failed</p>
-            <p className="mt-1 text-sm text-red-700">{error}</p>
-          </Card>
-        )}
-
-        {analysis && testBatch && (
-          <div className="space-y-4">
-            <div className="flex justify-end gap-2">
-              <ExportDialog
-                onExport={handleExportPrompt}
-                formats={["txt", "md"]}
-                title="Export Prompt"
-                description="Download the system prompt"
-              />
-              <Button onClick={handleExportAnalysis} variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Export Analysis
-              </Button>
-            </div>
-            <AnalysisResults
-              analysis={analysis}
-              testBatch={testBatch}
-              selectedCategoryId={selectedCategoryId}
-              onCategoryChange={setSelectedCategoryId}
-            />
-          </div>
-        )}
       </div>
     </PageContainer>
   );

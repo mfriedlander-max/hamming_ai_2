@@ -9,12 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UploadTestBatch } from "@/components/analysis/UploadTestBatch";
 import { PromptInput } from "@/components/analysis/PromptInput";
-import { createProject, DuplicateProjectNameError } from "@/lib/db/projects";
-import { createTestBatch } from "@/lib/db/testBatches";
-import { createVersion } from "@/lib/db/versions";
+import { DuplicateProjectNameError } from "@/lib/db/projects";
+import { useFullAnalysisPipeline } from "@/lib/hooks/useFullAnalysisPipeline";
 import type { TestResult } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/layout/BackButton";
+import { Loader2 } from "lucide-react";
 
 export default function NewAnalysisPage() {
   const router = useRouter();
@@ -25,9 +25,10 @@ export default function NewAnalysisPage() {
     fileName: string;
     fileType: "json" | "csv" | "excel";
   } | null>(null);
-  const [creating, setCreating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+
+  const { progress, runPipeline, isRunning } = useFullAnalysisPipeline();
 
   const handleUpload = (
     tests: TestResult[],
@@ -51,34 +52,22 @@ export default function NewAnalysisPage() {
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    setCreating(true);
-
     try {
-      const project = await createProject({
-        name: projectName.trim(),
+      const result = await runPipeline({
+        projectName: projectName.trim(),
         systemPrompt: systemPrompt.trim(),
-      });
-
-      await createTestBatch({
-        projectId: project.id,
+        tests: uploadedTests!.tests,
         fileName: uploadedTests!.fileName,
         fileType: uploadedTests!.fileType,
-        tests: uploadedTests!.tests,
       });
 
-      // Create V0 (Initial) version with the first prompt
-      await createVersion({
-        projectId: project.id,
-        content: systemPrompt.trim(),
-        createdBy: "user",
-        changesSummary: "Initial prompt",
-      });
-
-      toast({
-        title: "Project created",
-        description: "Your analysis is ready to review.",
-      });
-      router.push(`/projects/${project.id}`);
+      if (!result.success) {
+        toast({
+          title: "Analysis failed",
+          description: result.error || "Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Failed to create project:", error);
       if (error instanceof DuplicateProjectNameError) {
@@ -93,12 +82,17 @@ export default function NewAnalysisPage() {
           variant: "destructive",
         });
       }
-    } finally {
-      setCreating(false);
     }
   };
 
   const canCreate = projectName.trim() && systemPrompt.trim() && uploadedTests;
+
+  const getProgressMessage = () => {
+    if (progress.step === "generating" && progress.currentCategory && progress.totalCategories) {
+      return `${progress.message} (${progress.currentCategory}/${progress.totalCategories})`;
+    }
+    return progress.message;
+  };
 
   return (
     <PageContainer>
@@ -137,6 +131,7 @@ export default function NewAnalysisPage() {
                 className={errors.name ? "border-red-500" : ""}
                 aria-invalid={!!errors.name}
                 aria-describedby={errors.name ? "project-name-error" : undefined}
+                disabled={isRunning}
               />
               {errors.name && (
                 <p id="project-name-error" className="text-sm text-red-600">
@@ -157,6 +152,7 @@ export default function NewAnalysisPage() {
                     });
                   }
                 }}
+                disabled={isRunning}
               />
               {errors.tests && (
                 <p className="mt-2 text-sm text-red-600">{errors.tests}</p>
@@ -174,6 +170,7 @@ export default function NewAnalysisPage() {
                   });
                 }
               }}
+              disabled={isRunning}
             />
             {errors.prompt && (
               <p className="text-sm text-red-600">{errors.prompt}</p>
@@ -181,12 +178,46 @@ export default function NewAnalysisPage() {
           </div>
         </Card>
 
+        {/* Progress indicator */}
+        {isRunning && (
+          <Card className="p-4 transition-smooth">
+            <div className="flex items-center gap-3">
+              <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">{getProgressMessage()}</p>
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-500"
+                    style={{
+                      width: progress.step === "creating" ? "10%" :
+                             progress.step === "analyzing" ? "30%" :
+                             progress.step === "generating" && progress.currentCategory && progress.totalCategories
+                               ? `${30 + (progress.currentCategory / progress.totalCategories) * 60}%`
+                               : progress.step === "complete" ? "100%" : "0%"
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {progress.step === "error" && (
+          <Card className="border-red-200 bg-red-50 p-4 transition-smooth">
+            <p className="text-sm text-red-900">{progress.error}</p>
+          </Card>
+        )}
+
         <div className="flex justify-end gap-4">
-          <Button variant="outline" onClick={() => router.push("/dashboard")}>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/dashboard")}
+            disabled={isRunning}
+          >
             Cancel
           </Button>
-          <Button onClick={handleCreate} disabled={!canCreate || creating}>
-            {creating ? "Creating..." : "Create & Analyze"}
+          <Button onClick={handleCreate} disabled={!canCreate || isRunning}>
+            {isRunning ? "Processing..." : "Create & Analyze"}
           </Button>
         </div>
       </div>

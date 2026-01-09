@@ -69,7 +69,7 @@ export async function getSuggestionsByCategory(
 
 export async function updateSuggestionStatus(
   id: string,
-  status: "pending" | "accepted" | "rejected",
+  status: "pending" | "accepted" | "rejected" | "applied" | "rejected_applied" | "reverted_applied" | "reverted_rejected",
   reviewNotes?: string
 ): Promise<void> {
   await db.suggestions.update(id, {
@@ -99,4 +99,20 @@ export async function updateSuggestionStatus(
       },
     });
   }
+}
+
+export async function markSuggestionsAsApplied(
+  suggestionIds: string[]
+): Promise<void> {
+  if (suggestionIds.length === 0) return;
+
+  await db.transaction("rw", db.suggestions, async () => {
+    const now = Date.now();
+    for (const id of suggestionIds) {
+      await db.suggestions.update(id, {
+        status: "applied",
+        reviewedAt: now,
+      });
+    }
+  });
 }

@@ -10,6 +10,7 @@ export interface Project {
   tags?: string[];
   systemPrompt?: string;
   folderId: string;
+  displayOrder?: number;
 }
 
 export { DEFAULT_FOLDER_ID };

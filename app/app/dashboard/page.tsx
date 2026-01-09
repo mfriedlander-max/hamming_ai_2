@@ -1,10 +1,26 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverEvent,
+  DragStartEvent,
+  DragOverlay,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -17,30 +33,24 @@ import {
 import Link from "next/link";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { useFolders } from "@/lib/hooks/useFolders";
-import { formatDistanceToNow } from "date-fns";
 import { ProjectSkeleton } from "@/components/loading/ProjectSkeleton";
 import { EmptyProjects } from "@/components/empty/EmptyProjects";
 import { FolderCard } from "@/components/dashboard/FolderCard";
-import type { ProjectStatus } from "@/lib/db/projects";
-import { ChevronRight, FolderPlus, History } from "lucide-react";
+import { ProjectCard } from "@/components/dashboard/ProjectCard";
+import { SortableProjectCard } from "@/components/dashboard/SortableProjectCard";
+import { ChevronRight, FolderPlus } from "lucide-react";
 import { DEFAULT_FOLDER_ID, DEFAULT_FOLDER_NAME } from "@/types/folder";
-
-function getStatusBadgeVariant(status: ProjectStatus["status"]): "default" | "secondary" | "destructive" | "outline" {
-  switch (status) {
-    case "needs-analysis":
-      return "destructive";
-    case "pending-suggestions":
-      return "default";
-    case "up-to-date":
-      return "secondary";
-    default:
-      return "outline";
-  }
-}
 
 export default function DashboardPage() {
   const projectOptions = useMemo(() => ({ includeStatus: true }), []);
-  const { projectsWithStatus, loading: projectsLoading } = useProjects(projectOptions);
+  const {
+    projectsWithStatus,
+    loading: projectsLoading,
+    deleteProject,
+    moveProjectToFolder,
+    reorderProjects,
+    renameProject,
+  } = useProjects(projectOptions);
   const {
     folders,
     currentFolderId,
@@ -56,10 +66,13 @@ export default function DashboardPage() {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
-  // Filter projects by current folder
+  // Filter and sort projects by current folder
   const filteredProjects = useMemo(() => {
-    return projectsWithStatus.filter((project) => project.folderId === currentFolderId);
+    return projectsWithStatus
+      .filter((project) => project.folderId === currentFolderId)
+      .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
   }, [projectsWithStatus, currentFolderId]);
 
   // Get folders to display (all non-current folders, excluding default when in default)
@@ -75,6 +88,51 @@ export default function DashboardPage() {
   }, [folders, currentFolderId, isInSubfolder]);
 
   const loading = projectsLoading || foldersLoading;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over) return;
+
+    // Check if dropping on a folder
+    const targetFolder = folders.find((f) => f.id === over.id);
+    if (targetFolder && active.id !== over.id) {
+      // Move project to folder
+      await moveProjectToFolder(active.id as string, targetFolder.id);
+      return;
+    }
+
+    // Reordering within the same folder
+    if (active.id !== over.id) {
+      const oldIndex = filteredProjects.findIndex((p) => p.id === active.id);
+      const newIndex = filteredProjects.findIndex((p) => p.id === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newOrder = arrayMove(filteredProjects, oldIndex, newIndex);
+        const updates = newOrder.map((project, index) => ({
+          id: project.id,
+          displayOrder: index,
+        }));
+        await reorderProjects(updates);
+      }
+    }
+  };
 
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
@@ -111,6 +169,7 @@ export default function DashboardPage() {
   }
 
   const currentFolderName = currentFolder?.name || DEFAULT_FOLDER_NAME;
+  const activeProject = filteredProjects.find((p) => p.id === activeId);
 
   return (
     <PageContainer>
@@ -160,85 +219,65 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Folders Section (only when in root/default folder) */}
-      {displayFolders.length > 0 && (
-        <div className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-gray-700">Folders</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {displayFolders.map((folder) => (
-              <FolderCard
-                key={folder.id}
-                folder={folder}
-                onNavigate={navigateToFolder}
-                onRename={renameFolder}
-                onDelete={deleteFolder}
-              />
-            ))}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        {/* Folders Section (only when in root/default folder) */}
+        {displayFolders.length > 0 && (
+          <div className="mb-8">
+            <h2 className="mb-4 text-lg font-semibold text-gray-700">Folders</h2>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {displayFolders.map((folder) => (
+                <FolderCard
+                  key={folder.id}
+                  folder={folder}
+                  onNavigate={navigateToFolder}
+                  onRename={renameFolder}
+                  onDelete={deleteFolder}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Projects Section */}
-      {filteredProjects.length === 0 ? (
-        <EmptyProjects isInSubfolder={isInSubfolder} folderName={currentFolderName} />
-      ) : (
-        <>
-          {displayFolders.length > 0 && (
-            <h2 className="mb-4 text-lg font-semibold text-gray-700">Projects</h2>
-          )}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProjects.map((project) => (
-              <Card key={project.id} className="transition-smooth p-6 hover:shadow-md">
-                <Link href={`/projects/${project.id}`} className="block">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {project.name}
-                    </h3>
-                    <Badge
-                      variant={getStatusBadgeVariant(project.projectStatus.status)}
-                      className="shrink-0"
-                    >
-                      {project.projectStatus.label}
-                    </Badge>
-                  </div>
-                  {project.description && (
-                    <p className="mt-2 text-sm text-gray-600">
-                      {project.description}
-                    </p>
-                  )}
-                  <div className="mt-4 flex items-center gap-2 flex-wrap">
-                    {project.projectStatus.passRate !== undefined && (
-                      <Badge variant="outline" className="text-xs">
-                        {project.projectStatus.passRate}% pass rate
-                      </Badge>
-                    )}
-                    {project.tags?.map((tag) => (
-                      <Badge key={tag} variant="secondary">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </Link>
-                <div className="mt-4 flex items-center justify-between">
-                  <p className="text-xs text-gray-500">
-                    Updated {formatDistanceToNow(project.updatedAt, { addSuffix: true })}
-                  </p>
-                  {project.projectStatus.hasVersions && (
-                    <Link
-                      href={`/projects/${project.id}/history`}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Button variant="ghost" size="icon" title="View History">
-                        <History className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              </Card>
-            ))}
-          </div>
-        </>
-      )}
+        {/* Projects Section */}
+        {filteredProjects.length === 0 ? (
+          <EmptyProjects isInSubfolder={isInSubfolder} folderName={currentFolderName} />
+        ) : (
+          <>
+            {displayFolders.length > 0 && (
+              <h2 className="mb-4 text-lg font-semibold text-gray-700">Projects</h2>
+            )}
+            <SortableContext
+              items={filteredProjects.map((p) => p.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredProjects.map((project) => (
+                  <SortableProjectCard
+                    key={project.id}
+                    project={project}
+                    onDelete={deleteProject}
+                    onMove={moveProjectToFolder}
+                    onRename={renameProject}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </>
+        )}
+
+        <DragOverlay>
+          {activeProject ? (
+            <div className="opacity-80">
+              <ProjectCard project={activeProject} onDelete={async () => {}} />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {/* Create Folder Dialog */}
       <Dialog open={isCreatingFolder} onOpenChange={setIsCreatingFolder}>
