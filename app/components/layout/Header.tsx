@@ -20,8 +20,8 @@ export function Header() {
             </nav>
           </div>
           <div>
-            <Link href="/projects/new">
-              <Button>New Analysis</Button>
+            <Link href="/dashboard?newPrompt=true">
+              <Button>New Prompt</Button>
             </Link>
           </div>
         </div>

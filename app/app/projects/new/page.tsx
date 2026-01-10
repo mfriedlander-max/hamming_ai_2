@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,11 +15,19 @@ import type { TestResult } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/layout/BackButton";
 import { Loader2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useProjects } from "@/lib/hooks/useProjects";
+import { useFolders } from "@/lib/hooks/useFolders";
 
-export default function NewAnalysisPage() {
+function NewIterationPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const folderId = searchParams.get("folderId");
+
   const [projectName, setProjectName] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
+  const [promptSource, setPromptSource] = useState<"scratch" | "continue">("scratch");
+  const [selectedIteration, setSelectedIteration] = useState<string | null>(null);
   const [uploadedTests, setUploadedTests] = useState<{
     tests: TestResult[];
     fileName: string;
@@ -28,7 +36,41 @@ export default function NewAnalysisPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
+  // Get existing iterations (projects) in this folder/prompt
+  const { projectsWithStatus } = useProjects({ includeStatus: true });
+  const { folders } = useFolders();
+
+  const existingIterations = folderId
+    ? projectsWithStatus.filter(p => p.folderId === folderId).sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+    : [];
+
+  const currentFolder = folderId ? folders.find(f => f.id === folderId) : null;
+
   const { progress, runPipeline, isRunning } = useFullAnalysisPipeline();
+
+  // Auto-generate iteration name based on existing iterations
+  useEffect(() => {
+    if (folderId && existingIterations.length > 0 && !projectName) {
+      const nextNumber = existingIterations.length + 1;
+      setProjectName(`Iteration ${nextNumber}`);
+    } else if (folderId && existingIterations.length === 0 && !projectName) {
+      setProjectName("Iteration 1");
+    }
+  }, [folderId, existingIterations.length, projectName]);
+
+  // Load prompt from selected iteration
+  useEffect(() => {
+    if (promptSource === "continue" && selectedIteration) {
+      const iteration = existingIterations.find(p => p.id === selectedIteration);
+      if (iteration) {
+        setSystemPrompt(iteration.systemPrompt || "");
+      }
+    } else if (promptSource === "scratch") {
+      setSystemPrompt("");
+    }
+  }, [promptSource, selectedIteration, existingIterations]);
 
   const handleUpload = (
     tests: TestResult[],
@@ -59,6 +101,7 @@ export default function NewAnalysisPage() {
         tests: uploadedTests!.tests,
         fileName: uploadedTests!.fileName,
         fileType: uploadedTests!.fileType,
+        folderId: folderId || undefined,
       });
 
       if (!result.success) {
@@ -99,11 +142,17 @@ export default function NewAnalysisPage() {
       <div className="mx-auto max-w-3xl space-y-8">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <BackButton href="/dashboard" label="Back to dashboard" />
+            <BackButton
+              href={folderId ? `/dashboard?folder=${folderId}` : "/dashboard"}
+              label={folderId ? `Back to ${currentFolder?.name || "prompt"}` : "Back to dashboard"}
+            />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">New Analysis</h1>
+              <h1 className="text-3xl font-bold text-gray-900">New Iteration</h1>
               <p className="mt-2 text-gray-600">
-                Upload your test batch and system prompt to get started
+                {currentFolder
+                  ? `Create a new iteration for "${currentFolder.name}"`
+                  : "Upload your test batch and system prompt to get started"
+                }
               </p>
             </div>
           </div>
@@ -113,7 +162,7 @@ export default function NewAnalysisPage() {
           <div className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="project-name" className="text-base font-semibold">
-                Project Name
+                Iteration Name
               </Label>
               <Input
                 id="project-name"
@@ -127,7 +176,7 @@ export default function NewAnalysisPage() {
                     });
                   }
                 }}
-                placeholder="e.g., Customer Support Bot v2"
+                placeholder="e.g., Iteration 1"
                 className={errors.name ? "border-red-500" : ""}
                 aria-invalid={!!errors.name}
                 aria-describedby={errors.name ? "project-name-error" : undefined}
@@ -159,6 +208,58 @@ export default function NewAnalysisPage() {
               )}
             </div>
 
+            {/* Prompt Source Selection - only show if there are existing iterations */}
+            {existingIterations.length > 0 && (
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">System Prompt Source</Label>
+                <RadioGroup
+                  value={promptSource}
+                  onValueChange={(value: "scratch" | "continue") => {
+                    setPromptSource(value);
+                    if (value === "scratch") {
+                      setSelectedIteration(null);
+                    }
+                  }}
+                  disabled={isRunning}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="scratch" id="scratch" />
+                    <Label htmlFor="scratch" className="font-normal cursor-pointer">
+                      Start from scratch
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="continue" id="continue" />
+                    <Label htmlFor="continue" className="font-normal cursor-pointer">
+                      Continue from previous iteration
+                    </Label>
+                  </div>
+                </RadioGroup>
+
+                {promptSource === "continue" && (
+                  <div className="ml-6 space-y-2">
+                    <Label htmlFor="iteration-select" className="text-sm text-gray-600">
+                      Select iteration to continue from:
+                    </Label>
+                    <select
+                      id="iteration-select"
+                      value={selectedIteration || ""}
+                      onChange={(e) => setSelectedIteration(e.target.value || null)}
+                      className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      disabled={isRunning}
+                    >
+                      <option value="">Select an iteration...</option>
+                      {existingIterations.map((iteration, index) => (
+                        <option key={iteration.id} value={iteration.id}>
+                          {iteration.name} (created {new Date(iteration.createdAt).toLocaleDateString()})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
+
             <PromptInput
               value={systemPrompt}
               onChange={(value) => {
@@ -170,7 +271,7 @@ export default function NewAnalysisPage() {
                   });
                 }
               }}
-              disabled={isRunning}
+              disabled={isRunning || (promptSource === "continue" && !selectedIteration)}
             />
             {errors.prompt && (
               <p className="text-sm text-red-600">{errors.prompt}</p>
@@ -222,5 +323,22 @@ export default function NewAnalysisPage() {
         </div>
       </div>
     </PageContainer>
+  );
+}
+
+export default function NewIterationPage() {
+  return (
+    <Suspense fallback={
+      <PageContainer>
+        <div className="mx-auto max-w-3xl space-y-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </div>
+      </PageContainer>
+    }>
+      <NewIterationPageInner />
+    </Suspense>
   );
 }

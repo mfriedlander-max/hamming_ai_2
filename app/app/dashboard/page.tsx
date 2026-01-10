@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   DndContext,
   closestCenter,
@@ -35,13 +36,15 @@ import { useProjects } from "@/lib/hooks/useProjects";
 import { useFolders } from "@/lib/hooks/useFolders";
 import { ProjectSkeleton } from "@/components/loading/ProjectSkeleton";
 import { EmptyProjects } from "@/components/empty/EmptyProjects";
-import { FolderCard } from "@/components/dashboard/FolderCard";
+import { PromptCard } from "@/components/dashboard/PromptCard";
 import { ProjectCard } from "@/components/dashboard/ProjectCard";
 import { SortableProjectCard } from "@/components/dashboard/SortableProjectCard";
-import { ChevronRight, FolderPlus } from "lucide-react";
+import { ChevronRight, FilePlus } from "lucide-react";
 import { DEFAULT_FOLDER_ID, DEFAULT_FOLDER_NAME } from "@/types/folder";
 
-export default function DashboardPage() {
+function DashboardPageInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const projectOptions = useMemo(() => ({ includeStatus: true }), []);
   const {
     projectsWithStatus,
@@ -67,6 +70,15 @@ export default function DashboardPage() {
   const [newFolderName, setNewFolderName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  // Handle newPrompt query param from header button
+  useEffect(() => {
+    if (searchParams.get("newPrompt") === "true") {
+      setIsCreatingFolder(true);
+      // Clear the query param
+      router.replace("/dashboard", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   // Filter and sort projects by current folder
   const filteredProjects = useMemo(() => {
@@ -204,18 +216,20 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">
-          {isInSubfolder ? currentFolderName : "Projects"}
+          {isInSubfolder ? currentFolderName : "Prompts"}
         </h1>
         <div className="flex items-center gap-2">
           {!isInSubfolder && (
             <Button variant="outline" onClick={() => setIsCreatingFolder(true)}>
-              <FolderPlus className="mr-2 h-4 w-4" />
-              New Folder
+              <FilePlus className="mr-2 h-4 w-4" />
+              New Prompt
             </Button>
           )}
-          <Link href="/projects/new">
-            <Button>New Analysis</Button>
-          </Link>
+          {isInSubfolder && (
+            <Link href={`/projects/new?folderId=${currentFolderId}`}>
+              <Button>New Iteration</Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -225,13 +239,13 @@ export default function DashboardPage() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        {/* Folders Section (only when in root/default folder) */}
+        {/* Prompts Section (only when in root/default folder) */}
         {displayFolders.length > 0 && (
           <div className="mb-8">
-            <h2 className="mb-4 text-lg font-semibold text-gray-700">Folders</h2>
+            <h2 className="mb-4 text-lg font-semibold text-gray-700">Prompts</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {displayFolders.map((folder) => (
-                <FolderCard
+                <PromptCard
                   key={folder.id}
                   folder={folder}
                   onNavigate={navigateToFolder}
@@ -243,13 +257,13 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Projects Section */}
+        {/* Iterations Section (when inside a Prompt) */}
         {filteredProjects.length === 0 ? (
-          <EmptyProjects isInSubfolder={isInSubfolder} folderName={currentFolderName} />
+          <EmptyProjects isInSubfolder={isInSubfolder} folderName={currentFolderName} folderId={currentFolderId} />
         ) : (
           <>
-            {displayFolders.length > 0 && (
-              <h2 className="mb-4 text-lg font-semibold text-gray-700">Projects</h2>
+            {isInSubfolder && (
+              <h2 className="mb-4 text-lg font-semibold text-gray-700">Iterations</h2>
             )}
             <SortableContext
               items={filteredProjects.map((p) => p.id)}
@@ -279,19 +293,19 @@ export default function DashboardPage() {
         </DragOverlay>
       </DndContext>
 
-      {/* Create Folder Dialog */}
+      {/* Create Prompt Dialog */}
       <Dialog open={isCreatingFolder} onOpenChange={setIsCreatingFolder}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Folder</DialogTitle>
+            <DialogTitle>Create New Prompt</DialogTitle>
             <DialogDescription>
-              Enter a name for your new folder.
+              Enter a name for your prompt journey (e.g., &quot;Customer Support Bot&quot;).
             </DialogDescription>
           </DialogHeader>
           <Input
             value={newFolderName}
             onChange={(e) => setNewFolderName(e.target.value)}
-            placeholder="Folder name"
+            placeholder="Prompt name"
             autoFocus
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -320,5 +334,26 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
     </PageContainer>
+  );
+}
+
+// Wrapper component to handle Suspense for useSearchParams
+function DashboardContent() {
+  return <DashboardPageInner />;
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <PageContainer>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" role="status" aria-live="polite">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <ProjectSkeleton key={index} />
+          ))}
+        </div>
+      </PageContainer>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
