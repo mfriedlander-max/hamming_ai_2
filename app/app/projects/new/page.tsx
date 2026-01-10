@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
@@ -40,11 +40,14 @@ function NewIterationPageInner() {
   const { projectsWithStatus } = useProjects({ includeStatus: true });
   const { folders } = useFolders();
 
-  const existingIterations = folderId
-    ? projectsWithStatus.filter(p => p.folderId === folderId).sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-    : [];
+  const existingIterations = useMemo(() =>
+    folderId
+      ? projectsWithStatus.filter(p => p.folderId === folderId).sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      : [],
+    [folderId, projectsWithStatus]
+  );
 
   const currentFolder = folderId ? folders.find(f => f.id === folderId) : null;
 

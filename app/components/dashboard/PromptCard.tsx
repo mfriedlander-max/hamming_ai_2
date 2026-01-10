@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FileText, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Sparkline } from "@/components/ui/sparkline";
 import type { FolderWithCount } from "@/lib/hooks/useFolders";
 import { DEFAULT_FOLDER_ID } from "@/types/folder";
 
@@ -111,9 +112,19 @@ export function PromptCard({
               <h3 className="text-lg font-semibold text-gray-900">
                 {folder.name}
               </h3>
-              <p className="text-sm text-gray-500">
-                {folder.projectCount} {folder.projectCount === 1 ? "iteration" : "iterations"}
-              </p>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span>
+                  {folder.projectCount} {folder.projectCount === 1 ? "iteration" : "iterations"}
+                </span>
+                {folder.iterationPassRates.length > 0 && (
+                  <>
+                    <Sparkline values={folder.iterationPassRates} />
+                    <span className="font-medium text-gray-700">
+                      {folder.latestPassRate}%
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
           {!isDefaultFolder && (

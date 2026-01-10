@@ -140,4 +140,40 @@ export async function getProjectCountInFolder(folderId: string): Promise<number>
   return await db.projects.where("folderId").equals(folderId).count();
 }
 
+/**
+ * Gets pass rates for all iterations (projects) in a folder.
+ * Returns an array of pass rates ordered by createdAt (oldest first).
+ */
+export async function getFolderIterationPassRates(folderId: string): Promise<number[]> {
+  // Get all projects in the folder, ordered by createdAt
+  const projects = await db.projects
+    .where("folderId")
+    .equals(folderId)
+    .sortBy("createdAt");
+
+  // Get pass rates for each project
+  const passRates: number[] = [];
+
+  for (const project of projects) {
+    // Get the latest analysis for this project
+    const analyses = await db.analyses
+      .where("projectId")
+      .equals(project.id)
+      .reverse()
+      .toArray();
+
+    const latestAnalysis = analyses[0];
+    if (latestAnalysis?.testBatchId) {
+      const testBatch = await db.testBatches.get(latestAnalysis.testBatchId);
+      if (testBatch && testBatch.tests.length > 0) {
+        const passedTests = testBatch.tests.filter((t) => t.status === "pass").length;
+        const passRate = Math.round((passedTests / testBatch.tests.length) * 100);
+        passRates.push(passRate);
+      }
+    }
+  }
+
+  return passRates;
+}
+
 export { DEFAULT_FOLDER_ID, DEFAULT_FOLDER_NAME };

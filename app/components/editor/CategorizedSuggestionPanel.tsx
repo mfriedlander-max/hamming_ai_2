@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { CategoryAccordion } from "./CategoryAccordion";
+import { Card } from "@/components/ui/card";
 import type { Suggestion, FailureCategory } from "@/types";
 
 type SuggestionStatus = "pending" | "accepted" | "rejected" | "applied" | "rejected_applied" | "reverted_applied" | "reverted_rejected";
@@ -15,6 +16,8 @@ interface CategorizedSuggestionPanelProps {
   getOriginalStatus?: (id: string) => SuggestionStatus | undefined;
   acceptedCount: number;
   pendingCount: number;
+  appliedCount: number;
+  rejectedCount: number;
 }
 
 const severityOrder = { high: 0, medium: 1, low: 2 };
@@ -28,6 +31,8 @@ export function CategorizedSuggestionPanel({
   getOriginalStatus,
   acceptedCount,
   pendingCount,
+  appliedCount,
+  rejectedCount,
 }: CategorizedSuggestionPanelProps) {
   // Group suggestions by category and sort categories by severity
   const sortedCategories = useMemo(() => {
@@ -55,15 +60,17 @@ export function CategorizedSuggestionPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Failure Categories ({categoriesWithSuggestions.length})
-        </h3>
-        <div className="flex gap-4 text-sm">
+      <Card className="p-4">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
           <span className="text-green-600">{acceptedCount} accepted</span>
           <span className="text-gray-600">{pendingCount} pending</span>
+          <span className="text-blue-600">{appliedCount} applied</span>
+          <span className="text-red-600">{rejectedCount} rejected</span>
         </div>
-      </div>
+      </Card>
+      <h3 className="text-lg font-semibold text-gray-900">
+        Failure Categories ({categoriesWithSuggestions.length})
+      </h3>
 
       {categoriesWithSuggestions.length === 0 ? (
         <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center">

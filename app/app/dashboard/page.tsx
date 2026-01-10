@@ -38,7 +38,9 @@ import { ProjectSkeleton } from "@/components/loading/ProjectSkeleton";
 import { EmptyProjects } from "@/components/empty/EmptyProjects";
 import { PromptCard } from "@/components/dashboard/PromptCard";
 import { ProjectCard } from "@/components/dashboard/ProjectCard";
+import { IterationCard } from "@/components/dashboard/IterationCard";
 import { SortableProjectCard } from "@/components/dashboard/SortableProjectCard";
+import { SortableIterationCard } from "@/components/dashboard/SortableIterationCard";
 import { ChevronRight, FilePlus } from "lucide-react";
 import { DEFAULT_FOLDER_ID, DEFAULT_FOLDER_NAME } from "@/types/folder";
 
@@ -82,10 +84,17 @@ function DashboardPageInner() {
 
   // Filter and sort projects by current folder
   const filteredProjects = useMemo(() => {
-    return projectsWithStatus
-      .filter((project) => project.folderId === currentFolderId)
-      .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+    const filtered = projectsWithStatus.filter(
+      (project) => project.folderId === currentFolderId
+    );
+    // Sort by displayOrder for ordering, but maintain createdAt order for delta calculation
+    return filtered.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
   }, [projectsWithStatus, currentFolderId]);
+
+  // For delta calculation, we need iterations sorted by createdAt (oldest first)
+  const iterationsByCreatedAt = useMemo(() => {
+    return [...filteredProjects].sort((a, b) => a.createdAt - b.createdAt);
+  }, [filteredProjects]);
 
   // Get folders to display (all non-current folders, excluding default when in default)
   const displayFolders = useMemo(() => {
@@ -183,6 +192,13 @@ function DashboardPageInner() {
   const currentFolderName = currentFolder?.name || DEFAULT_FOLDER_NAME;
   const activeProject = filteredProjects.find((p) => p.id === activeId);
 
+  // Helper to get the previous iteration's pass rate for delta calculation
+  const getPreviousPassRate = (projectId: string): number | undefined => {
+    const index = iterationsByCreatedAt.findIndex((p) => p.id === projectId);
+    if (index <= 0) return undefined; // First iteration or not found
+    return iterationsByCreatedAt[index - 1].projectStatus.passRate;
+  };
+
   return (
     <PageContainer>
       {/* Breadcrumb Navigation */}
@@ -270,15 +286,25 @@ function DashboardPageInner() {
               strategy={rectSortingStrategy}
             >
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredProjects.map((project) => (
-                  <SortableProjectCard
-                    key={project.id}
-                    project={project}
-                    onDelete={deleteProject}
-                    onMove={moveProjectToFolder}
-                    onRename={renameProject}
-                  />
-                ))}
+                {isInSubfolder
+                  ? filteredProjects.map((project) => (
+                      <SortableIterationCard
+                        key={project.id}
+                        project={project}
+                        previousPassRate={getPreviousPassRate(project.id)}
+                        onDelete={deleteProject}
+                        onRename={renameProject}
+                      />
+                    ))
+                  : filteredProjects.map((project) => (
+                      <SortableProjectCard
+                        key={project.id}
+                        project={project}
+                        onDelete={deleteProject}
+                        onMove={moveProjectToFolder}
+                        onRename={renameProject}
+                      />
+                    ))}
               </div>
             </SortableContext>
           </>
@@ -287,7 +313,15 @@ function DashboardPageInner() {
         <DragOverlay>
           {activeProject ? (
             <div className="opacity-80">
-              <ProjectCard project={activeProject} onDelete={async () => {}} />
+              {isInSubfolder ? (
+                <IterationCard
+                  project={activeProject}
+                  previousPassRate={getPreviousPassRate(activeProject.id)}
+                  onDelete={async () => {}}
+                />
+              ) : (
+                <ProjectCard project={activeProject} onDelete={async () => {}} />
+              )}
             </div>
           ) : null}
         </DragOverlay>

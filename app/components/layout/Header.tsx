@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { PromptLabLogo } from "@/components/icons/PromptLabLogo";
 
 export function Header() {
   return (
@@ -7,8 +8,9 @@ export function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="transition-smooth text-xl font-semibold text-gray-900">
-              PromptLab
+            <Link href="/" className="flex items-center gap-2 transition-smooth">
+              <PromptLabLogo size={28} className="text-blue-600" />
+              <span className="text-xl font-semibold text-gray-900">PromptLab</span>
             </Link>
             <nav className="hidden md:flex gap-6">
               <Link

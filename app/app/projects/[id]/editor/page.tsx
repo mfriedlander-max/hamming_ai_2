@@ -60,6 +60,7 @@ export default function EditorPage() {
     acceptedCount,
     pendingCount,
     rejectedCount,
+    appliedCount,
     revertedAppliedCount,
     revertedRejectedCount,
     applyableCount,
@@ -94,7 +95,9 @@ export default function EditorPage() {
   const handleExportReport = async () => {
     if (!analysis || !testBatch) return;
 
-    const acceptedSuggestions = draftSuggestions.filter((s) => s.status === "accepted");
+    const acceptedSuggestions = draftSuggestions.filter(
+      (s) => s.status === "accepted" || s.status === "applied"
+    );
     if (acceptedSuggestions.length === 0) {
       toast({
         title: "No accepted suggestions",
@@ -371,6 +374,8 @@ export default function EditorPage() {
               getOriginalStatus={getOriginalStatus}
               acceptedCount={acceptedCount}
               pendingCount={pendingCount}
+              appliedCount={appliedCount}
+              rejectedCount={rejectedCount}
             />
           </div>
 

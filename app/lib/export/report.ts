@@ -7,8 +7,12 @@ export function generateChangeReport(
   oldVersion: PromptVersion,
   testBatch: TestBatch
 ): string {
-  const acceptedSuggestions = suggestions.filter((s) => s.status === "accepted");
-  const rejectedSuggestions = suggestions.filter((s) => s.status === "rejected");
+  const acceptedSuggestions = suggestions.filter(
+    (s) => s.status === "accepted" || s.status === "applied"
+  );
+  const rejectedSuggestions = suggestions.filter(
+    (s) => s.status === "rejected" || s.status === "rejected_applied"
+  );
 
   const report = `# Prompt Engineering Analysis Report
 

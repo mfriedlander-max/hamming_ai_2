@@ -10,11 +10,14 @@ import {
   getFolder,
   ensureDefaultFolder,
   getProjectCountInFolder,
+  getFolderIterationPassRates,
 } from "@/lib/db/folders";
 import { DEFAULT_FOLDER_ID } from "@/types/folder";
 
 export interface FolderWithCount extends Folder {
   projectCount: number;
+  iterationPassRates: number[];
+  latestPassRate?: number;
 }
 
 export function useFolders() {
@@ -31,11 +34,17 @@ export function useFolders() {
 
       const allFolders = await getAllFolders();
 
-      // Get project counts for each folder
+      // Get project counts and pass rates for each folder
       const foldersWithCounts = await Promise.all(
         allFolders.map(async (folder) => {
-          const projectCount = await getProjectCountInFolder(folder.id);
-          return { ...folder, projectCount };
+          const [projectCount, iterationPassRates] = await Promise.all([
+            getProjectCountInFolder(folder.id),
+            getFolderIterationPassRates(folder.id),
+          ]);
+          const latestPassRate = iterationPassRates.length > 0
+            ? iterationPassRates[iterationPassRates.length - 1]
+            : undefined;
+          return { ...folder, projectCount, iterationPassRates, latestPassRate };
         })
       );
 
