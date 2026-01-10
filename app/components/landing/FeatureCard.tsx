@@ -12,9 +12,9 @@ interface FeatureCardProps {
 
 export function FeatureCard({ icon: Icon, title, description }: FeatureCardProps) {
   return (
-    <Card hover className="p-6">
+    <Card hover className="p-6 text-center h-full flex flex-col">
       <motion.div
-        className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100"
+        className="mb-4 mx-auto inline-flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100"
         whileHover={{ scale: 1.1 }}
         transition={{ type: "spring", stiffness: 400, damping: 15 }}
       >

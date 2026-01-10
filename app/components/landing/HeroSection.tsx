@@ -20,20 +20,28 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <h1 className="text-5xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-              {hero.headline}
-              <br />
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl max-w-3xl leading-[2.25]">
+              {hero.headline}{" "}
               <span className="text-blue-600">{hero.headlineAccent}</span>
             </h1>
           </motion.div>
 
           <motion.p
-            className="mt-6 max-w-2xl text-lg leading-8 text-gray-600"
+            className="mt-6 text-lg leading-8 text-gray-600 max-w-xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            {hero.subheadline}
+            {hero.subheadline1}
+          </motion.p>
+
+          <motion.p
+            className="mt-2 max-w-xl text-lg leading-8 text-gray-600"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.25 }}
+          >
+            {hero.subheadline2}
           </motion.p>
 
           <motion.div

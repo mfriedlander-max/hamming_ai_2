@@ -2,14 +2,13 @@
 
 export const LANDING_CONTENT = {
   hero: {
-    headline: "Improve Your Prompts",
-    headlineAccent: "With Evidence",
-    subheadline:
-      "Test your AI prompts at scale. Get improvement suggestions backed by real data.",
+    headline: "Improve Your System Prompts for AI Chat and Voice Bots",
+    headlineAccent: "with Evidence.",
+    subheadline1: "Your system prompts determine your customer experience.",
+    subheadline2:
+      "Improve AI system prompts at scale. Get concrete suggestions based on your test results.",
     primaryCTA: "Get Started",
-    primaryCTAHref: "/projects/new",
-    secondaryCTA: "View Dashboard",
-    secondaryCTAHref: "/dashboard",
+    primaryCTAHref: "/dashboard?newPrompt=true",
   },
 
   productIntro: {
@@ -29,9 +28,9 @@ export const LANDING_CONTENT = {
       },
       {
         icon: "Target",
-        title: "Minimal Edits",
+        title: "Edit with Ease",
         description:
-          "Get precise, surgical improvements. We suggest only what needs to change.",
+          "Get precise, surgical improvements. Edit in a click.",
       },
       {
         icon: "Link",
@@ -96,6 +95,6 @@ export const LANDING_CONTENT = {
     heading: "Start Improving Your Prompts Today",
     subheading: "No credit card required. Analyze your first batch in minutes.",
     buttonText: "Analyze a Test Batch",
-    buttonHref: "/projects/new",
+    buttonHref: "/dashboard?newPrompt=true",
   },
 };

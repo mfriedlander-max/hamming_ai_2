@@ -25,12 +25,13 @@ export function FeatureGrid() {
           {features.heading}
         </motion.h2>
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
           {features.items.map((feature, index) => {
             const Icon = iconMap[feature.icon as keyof typeof iconMap];
             return (
               <motion.div
                 key={feature.title}
+                className="h-full"
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}

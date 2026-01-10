@@ -1,43 +1,79 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ChevronDown, Check, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Check, X, Undo2, Maximize2, Copy } from "lucide-react";
 import { scrollReveal } from "@/lib/animations/variants";
 
-// Mock data for the editor visualization
+// Mock data matching actual editor UI
 const mockCategories = [
   {
-    name: "Vague Instructions",
+    name: "Instruction Following",
     severity: "high",
-    count: 2,
+    count: "1 / 2",
+    description:
+      "The assistant failed to follow explicit system instructions to process refund requests politely",
     expanded: true,
     suggestions: [
-      { text: "Add specific format requirements", status: "accepted" },
-      { text: "Define response length constraints", status: "pending" },
+      {
+        type: "add",
+        status: "draft", // accepted
+        description:
+          "Test 3 demonstrates the assistant saying 'Sorry, I cannot help with that' for refund requests, which directly violates the instruction to process refunds politely.",
+        testCount: 1,
+      },
+      {
+        type: "add",
+        status: "rejected",
+        description:
+          "Test 3 shows the assistant completely refusing to help with refund requests instead of processing them.",
+        testCount: 1,
+      },
     ],
   },
   {
-    name: "Missing Context",
-    severity: "medium",
-    count: 1,
+    name: "Tone Misalignment",
+    severity: "high",
+    count: "0 / 2",
+    description:
+      "The assistant's response is dismissive and unhelpful, contradicting the required professional tone",
     expanded: false,
-    suggestions: [{ text: "Include user role context", status: "accepted" }],
+    suggestions: [],
+  },
+  {
+    name: "Missing Alternative Solutions",
+    severity: "medium",
+    count: "0 / 2",
+    description:
+      "When unable to fulfill a request, the assistant failed to offer alternatives",
+    expanded: false,
+    suggestions: [],
   },
 ];
 
-const mockDiff = [
-  { type: "context", text: "You are a helpful assistant." },
-  { type: "removed", text: "Answer questions clearly." },
-  {
-    type: "added",
-    text: "Answer questions in 2-3 sentences, using bullet points for lists.",
-  },
-  { type: "context", text: "" },
-  { type: "removed", text: "Be concise." },
-  {
-    type: "added",
-    text: "Keep responses under 150 words unless the user requests more detail.",
-  },
+// Original prompt lines with highlighting info
+const originalPrompt = [
+  { line: "You are a helpful customer service assistant", highlight: false },
+  { line: "", highlight: false },
+  { line: "Your role is to:", highlight: false },
+  { line: "- Answer questions about products, orders, and returns", highlight: false },
+  { line: "- Help customers track their orders", highlight: false },
+  { line: "- Process refund requests politely by acknowledging...", highlight: false },
+  { line: "", highlight: false },
+  { line: "Always be professional and helpful. If you cannot...", highlight: "removed" },
+];
+
+// Modified prompt lines with highlighting info
+const modifiedPrompt = [
+  { line: "You are a helpful customer service assistant", highlight: false },
+  { line: "", highlight: false },
+  { line: "Your role is to:", highlight: false },
+  { line: "- Answer questions about products, orders, and returns", highlight: false },
+  { line: "- Help customers track their orders", highlight: false },
+  { line: "- Process refund requests politely by acknowledging...", highlight: false },
+  { line: "", highlight: false },
+  { line: "Always be professional and helpful. If you cannot...", highlight: "added" },
+  { line: "", highlight: false },
+  { line: "Never give dismissive or curt responses - always...", highlight: "added" },
 ];
 
 function SeverityBadge({ severity }: { severity: string }) {
@@ -48,47 +84,97 @@ function SeverityBadge({ severity }: { severity: string }) {
   };
   return (
     <span
-      className={`px-1.5 py-0.5 rounded text-xs font-medium ${colors[severity as keyof typeof colors]}`}
+      className={`px-2 py-0.5 rounded text-xs font-medium ${colors[severity as keyof typeof colors]}`}
     >
       {severity}
     </span>
   );
 }
 
-function StatusIcon({ status }: { status: string }) {
-  if (status === "accepted") {
+function StatusBadge({ status }: { status: string }) {
+  if (status === "draft") {
     return (
-      <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
-        <Check className="w-2.5 h-2.5 text-green-600" />
-      </div>
+      <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+        Draft
+      </span>
     );
   }
   if (status === "rejected") {
     return (
-      <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
-        <X className="w-2.5 h-2.5 text-red-600" />
-      </div>
+      <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+        Reject
+      </span>
     );
   }
-  return <div className="w-4 h-4 rounded-full border-2 border-gray-300" />;
+  return null;
+}
+
+function SuggestionCard({
+  suggestion,
+}: {
+  suggestion: {
+    type: string;
+    status: string;
+    description: string;
+    testCount: number;
+  };
+}) {
+  const isDraft = suggestion.status === "draft";
+  const isRejected = suggestion.status === "rejected";
+
+  return (
+    <div className="border border-gray-200 rounded-lg p-3 bg-white mt-2 ml-6">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          {isDraft ? (
+            <Check className="w-4 h-4 text-green-600" />
+          ) : isRejected ? (
+            <X className="w-4 h-4 text-red-500" />
+          ) : (
+            <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+          )}
+          <span className="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
+            {suggestion.type}
+          </span>
+          <StatusBadge status={suggestion.status} />
+        </div>
+        <button
+          className={`text-xs font-medium px-3 py-1 rounded border flex items-center gap-1 ${
+            isDraft
+              ? "text-green-600 border-green-200 hover:bg-green-50"
+              : isRejected
+                ? "text-red-500 border-red-200 hover:bg-red-50"
+                : "text-gray-600 border-gray-200 hover:bg-gray-50"
+          }`}
+        >
+          <Undo2 className="w-3 h-3" />
+          {isDraft ? "Unaccept" : isRejected ? "Unreject" : "Undo"}
+        </button>
+      </div>
+      <p className="text-xs text-gray-600 leading-relaxed">{suggestion.description}</p>
+      <p className="text-xs text-gray-400 mt-1">{suggestion.testCount} test(s)</p>
+    </div>
+  );
 }
 
 export function MockEditor() {
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div className="text-center mb-12" {...scrollReveal}>
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Evidence-Based Suggestions
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Every suggestion traces back to specific test failures. Review
-            changes side-by-side before applying.
+          <p className="text-gray-600 text-lg">
+            Every suggestion traces back to specific test failures.
+          </p>
+          <p className="text-gray-600 text-lg">
+            Review changes side by side before applying.
           </p>
         </motion.div>
 
         <motion.div
-          className="max-w-5xl mx-auto"
+          className="max-w-6xl mx-auto"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
@@ -96,123 +182,189 @@ export function MockEditor() {
         >
           {/* Editor mockup card */}
           <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
-            {/* Top bar */}
-            <div className="bg-gray-50 border-b border-gray-200 px-4 py-2 flex items-center gap-2">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                <div className="w-3 h-3 rounded-full bg-green-400" />
+            {/* Top bar with Apply button */}
+            <div className="border-b border-gray-200 px-4 py-3 flex items-center justify-end">
+              <div className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg">
+                Apply 2 Change(s)
               </div>
-              <span className="text-sm text-gray-500 ml-2">
-                PromptLab Editor
-              </span>
+            </div>
+
+            {/* Test Results box */}
+            <div className="border-b border-gray-200 px-4 py-3">
+              <div className="flex items-center justify-between border border-gray-200 rounded-lg px-4 py-2">
+                <h3 className="text-sm font-semibold text-gray-900">Test Results</h3>
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="text-gray-500">
+                    Total: <span className="font-medium text-gray-900">3</span>
+                  </span>
+                  <span className="text-gray-500">
+                    Passed:{" "}
+                    <span className="font-medium text-green-600">2</span>
+                  </span>
+                  <span className="text-gray-500">
+                    Failed: <span className="font-medium text-red-600">1</span>
+                  </span>
+                  <span className="text-gray-500">
+                    Pass Rate:{" "}
+                    <span className="font-medium text-blue-600">66.7%</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Status bar */}
+            <div className="border-b border-gray-200 px-4 py-2">
+              <div className="flex items-center justify-between border border-gray-200 rounded-lg px-4 py-2">
+                <div className="flex gap-4 text-sm">
+                  <span className="text-green-600 font-medium">1 accepted</span>
+                  <span className="text-gray-500">2 pending</span>
+                  <span className="text-blue-600">0 applied</span>
+                  <span className="text-red-500 font-medium">1 rejected</span>
+                </div>
+                <span className="text-sm text-gray-500">
+                  2 change(s) will be applied: 1 accepted, 1 rejected.
+                </span>
+              </div>
             </div>
 
             {/* Main content */}
-            <div className="grid md:grid-cols-5 min-h-[400px]">
-              {/* Left panel - Suggestions */}
-              <div className="md:col-span-2 border-r border-gray-200 p-4 bg-gray-50/50">
-                {/* Status summary */}
-                <div className="flex gap-3 text-xs mb-4 pb-3 border-b border-gray-200">
-                  <span className="text-green-600 font-medium">2 accepted</span>
-                  <span className="text-gray-500">1 pending</span>
-                  <span className="text-blue-600">0 applied</span>
-                </div>
-
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                  Failure Categories
+            <div className="grid lg:grid-cols-5 min-h-[480px]">
+              {/* Left panel - Failure Categories */}
+              <div className="lg:col-span-2 border-r border-gray-200 p-4">
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">
+                  Failure Categories (3)
                 </h4>
 
-                {/* Categories */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {mockCategories.map((category) => (
                     <div
                       key={category.name}
-                      className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                      className={`rounded-lg border overflow-hidden ${
+                        category.severity === "high"
+                          ? "border-l-4 border-l-red-400 border-gray-200"
+                          : "border-l-4 border-l-yellow-400 border-gray-200"
+                      }`}
                     >
-                      <div className="px-3 py-2 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <ChevronDown
-                            className={`w-4 h-4 text-gray-400 transition-transform ${!category.expanded ? "-rotate-90" : ""}`}
-                          />
-                          <span className="text-sm font-medium text-gray-700">
-                            {category.name}
-                          </span>
+                      <div className="px-3 py-2.5 bg-white">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            {category.expanded ? (
+                              <ChevronDown className="w-4 h-4 text-gray-400" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-gray-400" />
+                            )}
+                            <span className="font-medium text-gray-900 text-sm">
+                              {category.name}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <SeverityBadge severity={category.severity} />
+                            <span className="text-xs text-gray-500">
+                              {category.count}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <SeverityBadge severity={category.severity} />
-                          <span className="text-xs text-gray-500">
-                            {category.count}
-                          </span>
-                        </div>
+                        {category.expanded && (
+                          <>
+                            <p className="text-xs text-gray-600 ml-6 mt-1">
+                              {category.description}
+                            </p>
+                            {category.suggestions.map((suggestion, idx) => (
+                              <SuggestionCard key={idx} suggestion={suggestion} />
+                            ))}
+                          </>
+                        )}
                       </div>
-
-                      {category.expanded && (
-                        <div className="border-t border-gray-100 px-3 py-2 space-y-2">
-                          {category.suggestions.map((suggestion, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-start gap-2 text-sm"
-                            >
-                              <StatusIcon status={suggestion.status} />
-                              <span className="text-gray-600">
-                                {suggestion.text}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Right panel - Diff view */}
-              <div className="md:col-span-3 p-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                  Preview Changes
-                </h4>
-
-                <div className="font-mono text-sm space-y-0.5">
-                  {mockDiff.map((line, idx) => {
-                    if (line.type === "removed") {
-                      return (
+              {/* Right panel - Side by side view */}
+              <div className="lg:col-span-3 p-4 flex flex-col">
+                <div className="grid grid-cols-2 gap-4 flex-1">
+                  <div className="flex flex-col">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                      Original
+                    </h4>
+                    <div className="bg-gray-50 rounded-lg p-3 font-mono text-xs border border-gray-200 flex-1">
+                      {originalPrompt.map((item, idx) => (
                         <div
                           key={idx}
-                          className="bg-red-50 text-red-800 px-2 py-1 rounded-sm"
+                          className={`flex h-5 items-center ${
+                            item.highlight === "removed" ? "bg-red-50" : ""
+                          }`}
                         >
-                          <span className="text-red-400 mr-2">-</span>
-                          {line.text}
+                          <span className="text-gray-400 w-6 text-right mr-3 select-none flex-shrink-0">
+                            {idx + 1}
+                          </span>
+                          <span
+                            className={`truncate ${
+                              item.highlight === "removed"
+                                ? "text-red-700"
+                                : "text-gray-700"
+                            }`}
+                          >
+                            {item.line || "\u00A0"}
+                          </span>
                         </div>
-                      );
-                    }
-                    if (line.type === "added") {
-                      return (
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                      Modified
+                    </h4>
+                    <div className="bg-gray-50 rounded-lg p-3 font-mono text-xs border border-gray-200 flex-1">
+                      {modifiedPrompt.map((item, idx) => (
                         <div
                           key={idx}
-                          className="bg-green-50 text-green-800 px-2 py-1 rounded-sm"
+                          className={`flex h-5 items-center ${
+                            item.highlight === "added" ? "bg-green-50" : ""
+                          }`}
                         >
-                          <span className="text-green-400 mr-2">+</span>
-                          {line.text}
+                          <span className="text-gray-400 w-6 text-right mr-3 select-none flex-shrink-0">
+                            {idx + 1}
+                          </span>
+                          <span
+                            className={`truncate ${
+                              item.highlight === "added"
+                                ? "text-green-700"
+                                : "text-gray-700"
+                            }`}
+                          >
+                            {item.line || "\u00A0"}
+                          </span>
                         </div>
-                      );
-                    }
-                    if (line.text === "") {
-                      return <div key={idx} className="h-4" />;
-                    }
-                    return (
-                      <div key={idx} className="text-gray-600 px-2 py-1">
-                        <span className="text-gray-300 mr-2">&nbsp;</span>
-                        {line.text}
-                      </div>
-                    );
-                  })}
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Apply button */}
-                <div className="mt-6 flex justify-end">
-                  <div className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg">
-                    Apply 2 Changes
+                {/* Updated Prompt Preview */}
+                <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-gray-700">
+                      Updated Prompt Preview
+                    </h4>
+                    <div className="flex gap-2">
+                      <button className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 px-2 py-1 border border-gray-200 rounded">
+                        <Maximize2 className="w-3 h-3" />
+                        Expand
+                      </button>
+                      <button className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 px-2 py-1 border border-gray-200 rounded">
+                        <Copy className="w-3 h-3" />
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-4 font-mono text-xs text-gray-700 max-h-24 overflow-hidden">
+                    <p>
+                      You are a helpful customer service assistant for an
+                      e-commerce company. Your role is to: - Answer questions about
+                      products, orders, and returns - Help customers track their
+                      orders - Process refund requests politely by acknowledging...
+                    </p>
                   </div>
                 </div>
               </div>
