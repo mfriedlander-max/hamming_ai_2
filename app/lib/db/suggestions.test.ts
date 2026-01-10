@@ -6,6 +6,7 @@ const mockSuggestionsGet = vi.fn()
 const mockSuggestionsUpdate = vi.fn()
 const mockSuggestionsToArray = vi.fn()
 const mockAnalysesGet = vi.fn()
+const mockTransaction = vi.fn()
 const mockCreateAuditEntry = vi.fn().mockResolvedValue(undefined)
 const mockGenerateDiff = vi.fn().mockReturnValue({
   patch: '--- original\n+++ modified',
@@ -29,6 +30,7 @@ vi.mock('./client', () => ({
     analyses: {
       get: (id: string) => mockAnalysesGet(id),
     },
+    transaction: (_mode: string, _table: any, callback: () => Promise<void>) => mockTransaction(callback),
   },
 }))
 
@@ -51,6 +53,7 @@ import {
   getSuggestionsByAnalysis,
   getSuggestionsByCategory,
   updateSuggestionStatus,
+  restoreSuggestionStatesForVersion,
 } from './suggestions'
 
 describe('suggestions database operations', () => {
@@ -61,6 +64,10 @@ describe('suggestions database operations', () => {
     mockSuggestionsUpdate.mockResolvedValue(1)
     mockSuggestionsToArray.mockResolvedValue([])
     mockAnalysesGet.mockResolvedValue(undefined)
+    // Mock transaction to execute the callback immediately
+    mockTransaction.mockImplementation(async (callback: () => Promise<void>) => {
+      await callback()
+    })
   })
 
   describe('createSuggestion', () => {
@@ -265,6 +272,111 @@ describe('suggestions database operations', () => {
       await updateSuggestionStatus('sug-1', 'pending')
 
       expect(mockCreateAuditEntry).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('restoreSuggestionStatesForVersion', () => {
+    it('should set accepted suggestions to applied status', async () => {
+      const mockSuggestions = [
+        { id: 'sug-1', analysisId: 'analysis-1', status: 'pending' },
+        { id: 'sug-2', analysisId: 'analysis-1', status: 'pending' },
+      ]
+      mockSuggestionsToArray.mockResolvedValue(mockSuggestions)
+
+      await restoreSuggestionStatesForVersion('analysis-1', ['sug-1'], [])
+
+      expect(mockSuggestionsUpdate).toHaveBeenCalledWith('sug-1', {
+        status: 'applied',
+        reviewedAt: expect.any(Number),
+      })
+    })
+
+    it('should set rejected suggestions to rejected_applied status', async () => {
+      const mockSuggestions = [
+        { id: 'sug-1', analysisId: 'analysis-1', status: 'pending' },
+        { id: 'sug-2', analysisId: 'analysis-1', status: 'pending' },
+      ]
+      mockSuggestionsToArray.mockResolvedValue(mockSuggestions)
+
+      await restoreSuggestionStatesForVersion('analysis-1', [], ['sug-2'])
+
+      expect(mockSuggestionsUpdate).toHaveBeenCalledWith('sug-2', {
+        status: 'rejected_applied',
+        reviewedAt: expect.any(Number),
+      })
+    })
+
+    it('should set other suggestions to pending status', async () => {
+      const mockSuggestions = [
+        { id: 'sug-1', analysisId: 'analysis-1', status: 'applied' },
+        { id: 'sug-2', analysisId: 'analysis-1', status: 'rejected_applied' },
+        { id: 'sug-3', analysisId: 'analysis-1', status: 'pending' },
+      ]
+      mockSuggestionsToArray.mockResolvedValue(mockSuggestions)
+
+      await restoreSuggestionStatesForVersion('analysis-1', ['sug-1'], ['sug-2'])
+
+      // sug-3 is not in accepted or rejected, should be set to pending
+      expect(mockSuggestionsUpdate).toHaveBeenCalledWith('sug-3', {
+        status: 'pending',
+        reviewedAt: undefined,
+      })
+    })
+
+    it('should handle empty acceptedIds and rejectedIds arrays', async () => {
+      const mockSuggestions = [
+        { id: 'sug-1', analysisId: 'analysis-1', status: 'applied' },
+      ]
+      mockSuggestionsToArray.mockResolvedValue(mockSuggestions)
+
+      await restoreSuggestionStatesForVersion('analysis-1', [], [])
+
+      // All suggestions should be set to pending when both arrays are empty
+      expect(mockSuggestionsUpdate).toHaveBeenCalledWith('sug-1', {
+        status: 'pending',
+        reviewedAt: undefined,
+      })
+    })
+
+    it('should not call update when no suggestions exist', async () => {
+      mockSuggestionsToArray.mockResolvedValue([])
+
+      await restoreSuggestionStatesForVersion('analysis-1', ['sug-1'], ['sug-2'])
+
+      expect(mockSuggestionsUpdate).not.toHaveBeenCalled()
+    })
+
+    it('should clear reviewedAt for pending suggestions', async () => {
+      const mockSuggestions = [
+        { id: 'sug-1', analysisId: 'analysis-1', status: 'applied' },
+      ]
+      mockSuggestionsToArray.mockResolvedValue(mockSuggestions)
+
+      await restoreSuggestionStatesForVersion('analysis-1', [], [])
+
+      expect(mockSuggestionsUpdate).toHaveBeenCalledWith('sug-1', {
+        status: 'pending',
+        reviewedAt: undefined,
+      })
+    })
+
+    it('should set reviewedAt for non-pending suggestions', async () => {
+      const mockSuggestions = [
+        { id: 'sug-1', analysisId: 'analysis-1', status: 'pending' },
+        { id: 'sug-2', analysisId: 'analysis-1', status: 'pending' },
+      ]
+      mockSuggestionsToArray.mockResolvedValue(mockSuggestions)
+
+      await restoreSuggestionStatesForVersion('analysis-1', ['sug-1'], ['sug-2'])
+
+      expect(mockSuggestionsUpdate).toHaveBeenCalledWith('sug-1', {
+        status: 'applied',
+        reviewedAt: expect.any(Number),
+      })
+      expect(mockSuggestionsUpdate).toHaveBeenCalledWith('sug-2', {
+        status: 'rejected_applied',
+        reviewedAt: expect.any(Number),
+      })
     })
   })
 })

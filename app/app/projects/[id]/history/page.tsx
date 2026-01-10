@@ -171,6 +171,9 @@ export default function HistoryPage() {
         createdBy: "user",
         changedFrom: selectedVersion.id,
         changesSummary: `Rollback to version ${selectedVersion.versionNumber}`,
+        analysisId: selectedVersion.analysisId,
+        acceptedSuggestionIds: selectedVersion.acceptedSuggestionIds,
+        rejectedSuggestionIds: selectedVersion.rejectedSuggestionIds,
       });
 
       // Restore suggestion states to match the target version

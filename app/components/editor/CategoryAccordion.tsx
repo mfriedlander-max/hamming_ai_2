@@ -52,28 +52,26 @@ export function CategoryAccordion({
     >
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex w-full items-center justify-between p-4 text-left hover:bg-gray-50/50"
+        className="flex w-full items-start justify-between p-4 text-left hover:bg-gray-50/50"
         aria-expanded={isExpanded}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3 flex-1 min-w-0 pr-4">
           {isExpanded ? (
-            <ChevronDown className="h-5 w-5 text-gray-500" />
+            <ChevronDown className="h-5 w-5 text-gray-500 shrink-0 mt-0.5" />
           ) : (
-            <ChevronRight className="h-5 w-5 text-gray-500" />
+            <ChevronRight className="h-5 w-5 text-gray-500 shrink-0 mt-0.5" />
           )}
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-gray-900">{category.name}</span>
-              <Badge className={severityBadgeColors[category.severity]}>
-                {category.severity}
-              </Badge>
-            </div>
-            <p className="mt-1 text-sm text-gray-600 line-clamp-1">
+          <div className="min-w-0">
+            <span className="font-medium text-gray-900">{category.name}</span>
+            <p className="mt-1 text-sm text-gray-600">
               {category.description}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-sm shrink-0">
+          <Badge className={severityBadgeColors[category.severity]}>
+            {category.severity}
+          </Badge>
           {appliedCount > 0 ? (
             <>
               <span className="text-blue-600" title="Applied">{appliedCount}</span>
