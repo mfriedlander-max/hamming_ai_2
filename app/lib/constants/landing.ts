@@ -5,8 +5,8 @@ export const LANDING_CONTENT = {
     headline: "Improve Your Prompts",
     headlineAccent: "With Evidence",
     subheadline:
-      "Test your AI prompts at scale. Get precise improvement suggestions backed by real data. Every edit traced, every change justified.",
-    primaryCTA: "Analyze a Test Batch",
+      "Test your AI prompts at scale. Get improvement suggestions backed by real data.",
+    primaryCTA: "Get Started",
     primaryCTAHref: "/projects/new",
     secondaryCTA: "View Dashboard",
     secondaryCTAHref: "/dashboard",

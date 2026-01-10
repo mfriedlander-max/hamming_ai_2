@@ -37,17 +37,14 @@ export function HeroSection() {
           </motion.p>
 
           <motion.div
-            className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:gap-4"
+            className="mt-10"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.35 }}
           >
             <Link href={hero.primaryCTAHref}>
-              <Button size="lg">{hero.primaryCTA}</Button>
-            </Link>
-            <Link href={hero.secondaryCTAHref}>
-              <Button size="lg" variant="outline">
-                {hero.secondaryCTA}
+              <Button size="lg" className="text-base px-8">
+                {hero.primaryCTA}
               </Button>
             </Link>
           </motion.div>
