@@ -10,7 +10,7 @@ export function HeroSection() {
   const { hero } = LANDING_CONTENT;
 
   return (
-    <section className="relative overflow-hidden gradient-hero animate-gradient">
+    <section className="relative gradient-hero animate-gradient -mb-32 pb-32">
       <BackgroundPattern pattern="dots" opacity={0.015} />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">

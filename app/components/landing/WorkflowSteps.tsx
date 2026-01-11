@@ -216,7 +216,7 @@ export function WorkflowSteps() {
   const [activeStep, setActiveStep] = useState(0);
 
   return (
-    <section className="py-24 gradient-workflow">
+    <section className="pt-32 pb-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-16"

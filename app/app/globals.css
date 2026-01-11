@@ -93,13 +93,14 @@
   .gradient-hero {
     background:
       radial-gradient(
-        ellipse 90% 70% at 50% 40%,
-        hsl(230 70% 88%) 0%,
-        hsl(225 60% 91%) 20%,
-        hsl(220 50% 94%) 35%,
-        hsl(215 40% 97%) 50%,
-        hsl(210 20% 99%) 65%,
-        hsl(0 0% 100%) 80%
+        ellipse 120% 80% at 50% 20%,
+        hsl(230 65% 89%) 0%,
+        hsl(225 58% 90%) 20%,
+        hsl(220 50% 92%) 35%,
+        hsl(215 40% 95%) 50%,
+        hsl(210 28% 97%) 65%,
+        hsl(205 15% 98.5%) 80%,
+        hsl(0 0% 100%) 100%
       );
   }
 
@@ -127,9 +128,14 @@
     );
   }
 
-  /* Workflow Steps section - plain white background */
+  /* Workflow Steps section - starts at white to match hero end, subtle bleed effect */
   .gradient-workflow {
-    background: hsl(0 0% 100%);
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 100%) 0%,
+      hsl(220 30% 98%) 15%,
+      hsl(0 0% 100%) 40%
+    );
   }
 
   /* Reduced motion support */

@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { DbInit } from "@/components/layout/DbInit";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { Toaster } from "@/components/ui/toaster";
+import { WalkthroughWrapper } from "@/components/walkthrough";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,8 +25,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <DbInit />
         <ErrorBoundary>
-          <Header />
-          {children}
+          <WalkthroughWrapper>
+            <Header />
+            {children}
+          </WalkthroughWrapper>
         </ErrorBoundary>
         <Toaster />
       </body>
