@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ChevronDown, ChevronRight, Check, X, Undo2, Maximize2, Copy } from "lucide-react";
 import { scrollReveal } from "@/lib/animations/variants";
+import { PromptLabLogo } from "@/components/icons/PromptLabLogo";
 
 // Mock data matching actual editor UI
 const mockCategories = [
@@ -182,53 +183,19 @@ export function MockEditor() {
         >
           {/* Editor mockup card */}
           <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
-            {/* Top bar with Apply button */}
-            <div className="border-b border-gray-200 px-4 py-3 flex items-center justify-end">
+            {/* Top bar with logo and Apply button */}
+            <div className="border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <PromptLabLogo size={24} className="text-blue-600" />
+                <span className="font-semibold text-gray-900">PromptLab</span>
+              </div>
               <div className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg">
                 Apply 2 Change(s)
               </div>
             </div>
 
-            {/* Test Results box */}
-            <div className="border-b border-gray-200 px-4 py-3">
-              <div className="flex items-center justify-between border border-gray-200 rounded-lg px-4 py-2">
-                <h3 className="text-sm font-semibold text-gray-900">Test Results</h3>
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="text-gray-500">
-                    Total: <span className="font-medium text-gray-900">3</span>
-                  </span>
-                  <span className="text-gray-500">
-                    Passed:{" "}
-                    <span className="font-medium text-green-600">2</span>
-                  </span>
-                  <span className="text-gray-500">
-                    Failed: <span className="font-medium text-red-600">1</span>
-                  </span>
-                  <span className="text-gray-500">
-                    Pass Rate:{" "}
-                    <span className="font-medium text-blue-600">66.7%</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Status bar */}
-            <div className="border-b border-gray-200 px-4 py-2">
-              <div className="flex items-center justify-between border border-gray-200 rounded-lg px-4 py-2">
-                <div className="flex gap-4 text-sm">
-                  <span className="text-green-600 font-medium">1 accepted</span>
-                  <span className="text-gray-500">2 pending</span>
-                  <span className="text-blue-600">0 applied</span>
-                  <span className="text-red-500 font-medium">1 rejected</span>
-                </div>
-                <span className="text-sm text-gray-500">
-                  2 change(s) will be applied: 1 accepted, 1 rejected.
-                </span>
-              </div>
-            </div>
-
             {/* Main content */}
-            <div className="grid lg:grid-cols-5 min-h-[480px]">
+            <div className="grid lg:grid-cols-5 min-h-[420px]">
               {/* Left panel - Failure Categories */}
               <div className="lg:col-span-2 border-r border-gray-200 p-4">
                 <h4 className="text-sm font-semibold text-gray-900 mb-4">
