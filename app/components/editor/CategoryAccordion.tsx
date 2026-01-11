@@ -17,6 +17,13 @@ interface CategoryAccordionProps {
   isDraftModified?: (id: string) => boolean;
   getOriginalStatus?: (id: string) => SuggestionStatus | undefined;
   defaultExpanded?: boolean;
+  onExpandChange?: (categoryId: string, isExpanded: boolean) => void; // Callback when expanded state changes
+  isFirstCategory?: boolean; // For walkthrough tour targeting
+  // Tour state props
+  isTourActive?: boolean; // Is walkthrough currently active
+  isTourTargetCategory?: boolean; // Is this category the target for failure-category step
+  isTourTargetSuggestion?: boolean; // Does this category contain the target suggestion
+  firstPendingSuggestionId?: string | null; // ID of the first pending suggestion to target
 }
 
 const severityColors = {
@@ -39,8 +46,20 @@ export function CategoryAccordion({
   isDraftModified,
   getOriginalStatus,
   defaultExpanded = false,
+  onExpandChange,
+  isFirstCategory = false,
+  isTourActive = false,
+  isTourTargetCategory = false,
+  isTourTargetSuggestion = false,
+  firstPendingSuggestionId = null,
 }: CategoryAccordionProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  const handleToggleExpand = () => {
+    const newExpanded = !isExpanded;
+    setIsExpanded(newExpanded);
+    onExpandChange?.(category.id, newExpanded);
+  };
 
   const acceptedCount = suggestions.filter((s) => s.status === "accepted").length;
   const appliedCount = suggestions.filter((s) => s.status === "applied").length;
@@ -51,9 +70,12 @@ export function CategoryAccordion({
       className={`rounded-lg border-l-4 transition-smooth ${severityColors[category.severity]}`}
     >
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="flex w-full items-start justify-between p-4 text-left hover:bg-gray-50/50"
+        onClick={handleToggleExpand}
+        className={`flex w-full items-start justify-between p-4 text-left hover:bg-gray-50/50 ${
+          isTourActive && !isTourTargetCategory ? "pointer-events-none" : ""
+        }`}
         aria-expanded={isExpanded}
+        {...(isTourTargetCategory ? { "data-tour": "failure-category" } : {})}
       >
         <div className="flex items-start gap-3 flex-1 min-w-0 pr-4">
           {isExpanded ? (
@@ -95,7 +117,9 @@ export function CategoryAccordion({
           {suggestions.length === 0 ? (
             <p className="text-sm text-gray-500 italic">No suggestions for this category</p>
           ) : (
-            suggestions.map((suggestion) => {
+            suggestions.map((suggestion, index) => {
+              // Target this suggestion if it's the first pending one in this category (for tour)
+              const isTourTargetSuggestionCard = isTourTargetSuggestion && suggestion.id === firstPendingSuggestionId;
               const isModified = isDraftModified?.(suggestion.id) ?? false;
               const originalStatus = getOriginalStatus?.(suggestion.id);
 
@@ -164,6 +188,7 @@ export function CategoryAccordion({
                   className={`transition-smooth p-4 hover:shadow-sm ${
                     isModified ? "ring-2 ring-blue-200 ring-offset-1" : ""
                   }`}
+                  {...(isTourTargetSuggestionCard ? { "data-tour": "suggestion-card" } : {})}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -178,19 +203,24 @@ export function CategoryAccordion({
                       </p>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2" data-tour="suggestion-actions">
                       {/* DECISION PHASE */}
 
                       {/* pending: Accept, Reject */}
                       {suggestion.status === "pending" && (
                         <>
-                          <Button size="sm" onClick={() => onSetStatus(suggestion.id, "accepted")}>
+                          <Button
+                            size="sm"
+                            onClick={() => onSetStatus(suggestion.id, "accepted")}
+                            {...(isTourTargetSuggestionCard ? { "data-tour": "suggestion-action" } : {})}
+                          >
                             Accept
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => onSetStatus(suggestion.id, "rejected")}
+                            {...(isTourTargetSuggestionCard ? { "data-tour": "suggestion-action" } : {})}
                           >
                             Reject
                           </Button>

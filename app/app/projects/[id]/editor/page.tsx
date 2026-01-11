@@ -343,6 +343,7 @@ export default function EditorPage() {
               disabled={applyableCount === 0 || applying}
               size="lg"
               className="ml-1"
+              data-tour="apply-changes"
             >
               {applying ? "Applying..." : `Apply ${applyableCount} Change(s)`}
             </Button>
@@ -364,7 +365,7 @@ export default function EditorPage() {
         )}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-1 lg:sticky lg:top-24 lg:self-start">
+          <div className="lg:col-span-1 lg:sticky lg:top-24 lg:self-start" data-tour="suggestions-panel">
             <CategorizedSuggestionPanel
               categories={analysis.categories}
               suggestions={draftSuggestions}
@@ -387,10 +388,12 @@ export default function EditorPage() {
                   : "Accept or reject suggestions to preview changes."}
               </p>
             </Card>
-            <DiffViewer
-              original={originalPrompt}
-              modified={updatedPrompt}
-            />
+            <div data-tour="diff-viewer">
+              <DiffViewer
+                original={originalPrompt}
+                modified={updatedPrompt}
+              />
+            </div>
             <PromptPreview content={updatedPrompt} />
           </div>
         </div>

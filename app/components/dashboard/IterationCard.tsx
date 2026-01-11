@@ -32,6 +32,7 @@ interface IterationCardProps {
   previousPassRate?: number;
   onDelete: (id: string) => Promise<void>;
   onRename?: (id: string, newName: string) => Promise<void>;
+  isTourTarget?: boolean;
 }
 
 function getDeltaDisplay(
@@ -60,6 +61,7 @@ export function IterationCard({
   previousPassRate,
   onDelete,
   onRename,
+  isTourTarget = false,
 }: IterationCardProps) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isRenameOpen, setIsRenameOpen] = useState(false);
@@ -86,9 +88,9 @@ export function IterationCard({
 
   return (
     <>
-      <Card className="transition-smooth p-6 hover:shadow-md">
+      <Card className="transition-smooth p-6 hover:shadow-md" data-tour="iteration-card">
         <div className="flex items-start justify-between gap-2">
-          <Link href={`/projects/${project.id}/editor`} className="flex-1 block">
+          <Link href={`/projects/${project.id}/editor`} className={cn("flex-1 block", isTourTarget && "pointer-events-none")}>
             {/* Top row: Name and Pass Rate */}
             <div className="flex items-start justify-between gap-2">
               <h3 className="text-lg font-semibold text-gray-900">

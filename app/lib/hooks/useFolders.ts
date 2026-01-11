@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import type { Folder } from "@/types";
 import {
   getAllFolders,
@@ -21,10 +22,22 @@ export interface FolderWithCount extends Folder {
 }
 
 export function useFolders() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [folders, setFolders] = useState<FolderWithCount[]>([]);
-  const [currentFolderId, setCurrentFolderId] = useState<string>(DEFAULT_FOLDER_ID);
+  // Initialize from URL param if present
+  const folderParam = searchParams.get("folder");
+  const [currentFolderId, setCurrentFolderId] = useState<string>(folderParam || DEFAULT_FOLDER_ID);
   const [currentFolder, setCurrentFolder] = useState<Folder | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Sync state with URL param changes
+  useEffect(() => {
+    const paramFolderId = searchParams.get("folder") || DEFAULT_FOLDER_ID;
+    if (paramFolderId !== currentFolderId) {
+      setCurrentFolderId(paramFolderId);
+    }
+  }, [searchParams, currentFolderId]);
 
   const loadFolders = useCallback(async () => {
     setLoading(true);
@@ -85,8 +98,12 @@ export function useFolders() {
   }, [loadFolders]);
 
   const navigateToFolder = useCallback((id: string) => {
-    setCurrentFolderId(id);
-  }, []);
+    if (id === DEFAULT_FOLDER_ID) {
+      router.push('/dashboard');
+    } else {
+      router.push(`/dashboard?folder=${id}`);
+    }
+  }, [router]);
 
   const refresh = loadFolders;
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { CategoryAccordion } from "./CategoryAccordion";
 import { Card } from "@/components/ui/card";
+import { useWalkthrough } from "@/components/walkthrough/WalkthroughProvider";
 import type { Suggestion, FailureCategory } from "@/types";
 
 type SuggestionStatus = "pending" | "accepted" | "rejected" | "applied" | "rejected_applied" | "reverted_applied" | "reverted_rejected";
@@ -34,6 +35,25 @@ export function CategorizedSuggestionPanel({
   appliedCount,
   rejectedCount,
 }: CategorizedSuggestionPanelProps) {
+  // Walkthrough context
+  const { isActive: isWalkthroughActive, currentStepTarget } = useWalkthrough();
+
+  // Track expanded state for each category
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  // Handle expand/collapse changes from CategoryAccordion
+  const handleExpandChange = useCallback((categoryId: string, isExpanded: boolean) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (isExpanded) {
+        next.add(categoryId);
+      } else {
+        next.delete(categoryId);
+      }
+      return next;
+    });
+  }, []);
+
   // Group suggestions by category and sort categories by severity
   const sortedCategories = useMemo(() => {
     return [...categories].sort(
@@ -58,6 +78,60 @@ export function CategorizedSuggestionPanel({
     );
   }, [sortedCategories, suggestionsByCategory]);
 
+  // Determine tour targets based on walkthrough step
+  const tourTargets = useMemo(() => {
+    if (!isWalkthroughActive) {
+      return { targetCategoryId: null, targetSuggestionId: null, categoryWithTargetSuggestion: null };
+    }
+
+    // For failure-category step: find first collapsed category
+    if (currentStepTarget === "failure-category") {
+      for (const cat of categoriesWithSuggestions) {
+        if (!expandedCategories.has(cat.id)) {
+          return { targetCategoryId: cat.id, targetSuggestionId: null, categoryWithTargetSuggestion: null };
+        }
+      }
+      // All expanded - skip to first category (it will become the suggestion target)
+      return { targetCategoryId: null, targetSuggestionId: null, categoryWithTargetSuggestion: null };
+    }
+
+    // For suggestion-action step: find first pending suggestion
+    if (currentStepTarget === "suggestion-action" || currentStepTarget === "suggestion-card") {
+      for (const cat of categoriesWithSuggestions) {
+        const catSuggestions = suggestionsByCategory.get(cat.id) || [];
+        const firstPending = catSuggestions.find(s => s.status === "pending");
+        if (firstPending) {
+          return {
+            targetCategoryId: null,
+            targetSuggestionId: firstPending.id,
+            categoryWithTargetSuggestion: cat.id
+          };
+        }
+      }
+      // No pending suggestions - fallback to first suggestion in first expanded category
+      for (const cat of categoriesWithSuggestions) {
+        const catSuggestions = suggestionsByCategory.get(cat.id) || [];
+        if (catSuggestions.length > 0 && expandedCategories.has(cat.id)) {
+          return {
+            targetCategoryId: null,
+            targetSuggestionId: catSuggestions[0].id,
+            categoryWithTargetSuggestion: cat.id
+          };
+        }
+      }
+    }
+
+    return { targetCategoryId: null, targetSuggestionId: null, categoryWithTargetSuggestion: null };
+  }, [isWalkthroughActive, currentStepTarget, categoriesWithSuggestions, expandedCategories, suggestionsByCategory]);
+
+  // Determine if tour is active and in a relevant step
+  const isTourActiveForCategories = isWalkthroughActive && (
+    currentStepTarget === "suggestions-panel" ||
+    currentStepTarget === "failure-category" ||
+    currentStepTarget === "suggestion-action" ||
+    currentStepTarget === "suggestion-card"
+  );
+
   return (
     <div className="space-y-4">
       <Card className="p-4">
@@ -81,18 +155,37 @@ export function CategorizedSuggestionPanel({
         </div>
       ) : (
         <div className="space-y-3">
-          {categoriesWithSuggestions.map((category) => (
-            <CategoryAccordion
-              key={category.id}
-              category={category}
-              suggestions={suggestionsByCategory.get(category.id) || []}
-              onToggleAccept={onToggleAccept}
-              onSetStatus={onSetStatus}
-              isDraftModified={isDraftModified}
-              getOriginalStatus={getOriginalStatus}
-              defaultExpanded={false}
-            />
-          ))}
+          {categoriesWithSuggestions.map((category, index) => {
+            const isExpanded = expandedCategories.has(category.id);
+            const catSuggestions = suggestionsByCategory.get(category.id) || [];
+
+            // Find first pending suggestion in this category
+            const firstPendingInCategory = catSuggestions.find(s => s.status === "pending");
+
+            return (
+              <CategoryAccordion
+                key={category.id}
+                category={category}
+                suggestions={catSuggestions}
+                onToggleAccept={onToggleAccept}
+                onSetStatus={onSetStatus}
+                isDraftModified={isDraftModified}
+                getOriginalStatus={getOriginalStatus}
+                defaultExpanded={isExpanded}
+                onExpandChange={handleExpandChange}
+                isFirstCategory={index === 0}
+                // Tour props
+                isTourActive={isTourActiveForCategories}
+                isTourTargetCategory={tourTargets.targetCategoryId === category.id}
+                isTourTargetSuggestion={tourTargets.categoryWithTargetSuggestion === category.id}
+                firstPendingSuggestionId={
+                  tourTargets.categoryWithTargetSuggestion === category.id
+                    ? tourTargets.targetSuggestionId
+                    : firstPendingInCategory?.id ?? null
+                }
+              />
+            );
+          })}
         </div>
       )}
     </div>

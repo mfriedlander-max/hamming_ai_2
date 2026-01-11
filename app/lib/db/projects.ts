@@ -14,16 +14,27 @@ export class DuplicateProjectNameError extends Error {
   }
 }
 
-export async function checkProjectNameExists(name: string): Promise<boolean> {
+export async function checkProjectNameExists(
+  name: string,
+  folderId?: string
+): Promise<boolean> {
   const allProjects = await db.projects.toArray();
   return allProjects.some(
-    (p) => p.name.toLowerCase() === name.toLowerCase()
+    (p) =>
+      p.name.toLowerCase() === name.toLowerCase() &&
+      (folderId ? p.folderId === folderId : true)
   );
 }
 
-export async function generateUniqueProjectName(baseName: string): Promise<string> {
+export async function generateUniqueProjectName(
+  baseName: string,
+  folderId?: string
+): Promise<string> {
   const allProjects = await db.projects.toArray();
-  const existingNames = new Set(allProjects.map((p) => p.name.toLowerCase()));
+  const relevantProjects = folderId
+    ? allProjects.filter((p) => p.folderId === folderId)
+    : allProjects;
+  const existingNames = new Set(relevantProjects.map((p) => p.name.toLowerCase()));
 
   if (!existingNames.has(baseName.toLowerCase())) {
     return baseName;
@@ -45,10 +56,10 @@ export async function createProject(data: {
   systemPrompt?: string;
   folderId?: string;
 }): Promise<Project> {
-  // Check for duplicate project name
-  const nameExists = await checkProjectNameExists(data.name);
+  // Check for duplicate project name within the same folder
+  const nameExists = await checkProjectNameExists(data.name, data.folderId);
   if (nameExists) {
-    const suggestedName = await generateUniqueProjectName(data.name);
+    const suggestedName = await generateUniqueProjectName(data.name, data.folderId);
     throw new DuplicateProjectNameError(data.name, suggestedName);
   }
 

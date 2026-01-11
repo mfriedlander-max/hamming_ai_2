@@ -12,6 +12,7 @@ interface SortableIterationCardProps {
   previousPassRate?: number;
   onDelete: (id: string) => Promise<void>;
   onRename?: (id: string, newName: string) => Promise<void>;
+  isTourTarget?: boolean;
 }
 
 export function SortableIterationCard({
@@ -19,6 +20,7 @@ export function SortableIterationCard({
   previousPassRate,
   onDelete,
   onRename,
+  isTourTarget = false,
 }: SortableIterationCardProps) {
   const {
     attributes,
@@ -51,6 +53,7 @@ export function SortableIterationCard({
           previousPassRate={previousPassRate}
           onDelete={onDelete}
           onRename={onRename}
+          isTourTarget={isTourTarget}
         />
       </div>
     </div>

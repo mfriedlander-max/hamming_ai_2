@@ -43,6 +43,7 @@ import { SortableProjectCard } from "@/components/dashboard/SortableProjectCard"
 import { SortableIterationCard } from "@/components/dashboard/SortableIterationCard";
 import { ChevronRight, FilePlus } from "lucide-react";
 import { DEFAULT_FOLDER_ID, DEFAULT_FOLDER_NAME } from "@/types/folder";
+import { useWalkthrough } from "@/components/walkthrough/WalkthroughProvider";
 
 function DashboardPageInner() {
   const searchParams = useSearchParams();
@@ -72,6 +73,11 @@ function DashboardPageInner() {
   const [newFolderName, setNewFolderName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [lastCreatedFolderId, setLastCreatedFolderId] = useState<string | null>(null);
+
+  // Walkthrough context for iteration card targeting
+  const { isActive: isWalkthroughActive, currentStepTarget } = useWalkthrough();
+  const isIterationCardStep = isWalkthroughActive && currentStepTarget === "iteration-card";
 
   // Handle newPrompt query param from header button
   useEffect(() => {
@@ -159,7 +165,8 @@ function DashboardPageInner() {
     if (!newFolderName.trim()) return;
     setIsSubmitting(true);
     try {
-      await createFolder(newFolderName.trim());
+      const newFolder = await createFolder(newFolderName.trim());
+      setLastCreatedFolderId(newFolder.id);
       setNewFolderName("");
       setIsCreatingFolder(false);
     } catch (error) {
@@ -236,14 +243,14 @@ function DashboardPageInner() {
         </h1>
         <div className="flex items-center gap-2">
           {!isInSubfolder && (
-            <Button variant="outline" onClick={() => setIsCreatingFolder(true)}>
+            <Button variant="outline" onClick={() => setIsCreatingFolder(true)} data-tour="new-prompt">
               <FilePlus className="mr-2 h-4 w-4" />
               New Prompt
             </Button>
           )}
           {isInSubfolder && (
             <Link href={`/projects/new?folderId=${currentFolderId}`}>
-              <Button>New Iteration</Button>
+              <Button data-tour="new-iteration">New Iteration</Button>
             </Link>
           )}
         </div>
@@ -259,14 +266,15 @@ function DashboardPageInner() {
         {displayFolders.length > 0 && (
           <div className="mb-8">
             <h2 className="mb-4 text-lg font-semibold text-gray-700">Prompts</h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {displayFolders.map((folder) => (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-tour="prompt-cards">
+              {displayFolders.map((folder, index) => (
                 <PromptCard
                   key={folder.id}
                   folder={folder}
                   onNavigate={navigateToFolder}
                   onRename={renameFolder}
                   onDelete={deleteFolder}
+                  isTourTarget={lastCreatedFolderId ? folder.id === lastCreatedFolderId : index === 0}
                 />
               ))}
             </div>
@@ -275,7 +283,12 @@ function DashboardPageInner() {
 
         {/* Iterations Section (when inside a Prompt) */}
         {filteredProjects.length === 0 ? (
-          <EmptyProjects isInSubfolder={isInSubfolder} folderName={currentFolderName} folderId={currentFolderId} />
+          <EmptyProjects
+            isInSubfolder={isInSubfolder}
+            folderName={currentFolderName}
+            folderId={currentFolderId}
+            hasExistingPrompts={displayFolders.length > 0}
+          />
         ) : (
           <>
             {isInSubfolder && (
@@ -287,13 +300,14 @@ function DashboardPageInner() {
             >
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {isInSubfolder
-                  ? filteredProjects.map((project) => (
+                  ? filteredProjects.map((project, index) => (
                       <SortableIterationCard
                         key={project.id}
                         project={project}
                         previousPassRate={getPreviousPassRate(project.id)}
                         onDelete={deleteProject}
                         onRename={renameProject}
+                        isTourTarget={isIterationCardStep && index === 0}
                       />
                     ))
                   : filteredProjects.map((project) => (
@@ -329,7 +343,7 @@ function DashboardPageInner() {
 
       {/* Create Prompt Dialog */}
       <Dialog open={isCreatingFolder} onOpenChange={setIsCreatingFolder}>
-        <DialogContent>
+        <DialogContent data-tour="prompt-dialog">
           <DialogHeader>
             <DialogTitle>Create New Prompt</DialogTitle>
             <DialogDescription>
@@ -361,6 +375,7 @@ function DashboardPageInner() {
             <Button
               onClick={handleCreateFolder}
               disabled={isSubmitting || !newFolderName.trim()}
+              data-tour="prompt-create-button"
             >
               {isSubmitting ? "Creating..." : "Create"}
             </Button>

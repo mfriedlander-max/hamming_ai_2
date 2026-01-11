@@ -30,6 +30,7 @@ interface PromptCardProps {
   onNavigate: (id: string) => void;
   onRename: (id: string, newName: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  isTourTarget?: boolean;
 }
 
 export function PromptCard({
@@ -37,6 +38,7 @@ export function PromptCard({
   onNavigate,
   onRename,
   onDelete,
+  isTourTarget = false,
 }: PromptCardProps) {
   const [isRenaming, setIsRenaming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -102,6 +104,7 @@ export function PromptCard({
         role="button"
         tabIndex={0}
         aria-label={`Open prompt ${folder.name}`}
+        {...(isTourTarget ? { "data-tour": "prompt-card" } : {})}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">

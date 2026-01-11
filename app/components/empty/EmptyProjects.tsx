@@ -7,9 +7,15 @@ interface EmptyProjectsProps {
   isInSubfolder?: boolean;
   folderName?: string;
   folderId?: string;
+  hasExistingPrompts?: boolean;
 }
 
-export function EmptyProjects({ isInSubfolder = false, folderName, folderId }: EmptyProjectsProps) {
+export function EmptyProjects({
+  isInSubfolder = false,
+  folderName,
+  folderId,
+  hasExistingPrompts = false,
+}: EmptyProjectsProps) {
   if (isInSubfolder) {
     return (
       <Card className="p-8 text-center md:p-12">
@@ -32,11 +38,12 @@ export function EmptyProjects({ isInSubfolder = false, folderName, folderId }: E
     <Card className="p-8 text-center md:p-12">
       <FilePlus className="mx-auto mb-4 h-12 w-12 text-gray-300 md:h-16 md:w-16" />
       <h3 className="mb-2 text-xl font-semibold text-gray-900">
-        No prompts yet
+        {hasExistingPrompts ? "Create a new prompt" : "Create your first prompt"}
       </h3>
       <p className="mb-6 text-sm text-gray-500 max-w-md mx-auto">
-        Create your first prompt to start your iteration journey.
-        Each prompt contains multiple iterations as you refine and improve.
+        {hasExistingPrompts
+          ? "Create another prompt and start your analysis. As a reminder, each prompt contains multiple iterations as you refine and improve."
+          : "Create your first prompt to start your analysis. Each prompt contains multiple iterations as you refine and improve."}
       </p>
       <Link href="/dashboard?newPrompt=true">
         <Button>New Prompt</Button>
