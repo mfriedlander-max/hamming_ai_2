@@ -214,11 +214,14 @@ export function PromptCard({
               {folder.projectCount > 0 && (
                 <>
                   {" "}
-                  The {folder.projectCount}{" "}
-                  {folder.projectCount === 1 ? "iteration" : "iterations"} in this
-                  prompt will be permanently deleted.
+                  This will permanently delete {folder.projectCount}{" "}
+                  {folder.projectCount === 1 ? "iteration" : "iterations"} and
+                  all their data (analyses, suggestions, test batches).
                 </>
               )}
+              <br />
+              <br />
+              This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

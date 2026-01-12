@@ -45,7 +45,7 @@ export function EmptyProjects({
           ? "Create another prompt and start your analysis. As a reminder, each prompt contains multiple iterations as you refine and improve."
           : "Create your first prompt to start your analysis. Each prompt contains multiple iterations as you refine and improve."}
       </p>
-      <Link href="/dashboard">
+      <Link href="/dashboard?newPrompt=true">
         <Button>New Prompt</Button>
       </Link>
     </Card>

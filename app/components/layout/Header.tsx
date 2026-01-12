@@ -22,7 +22,7 @@ export function Header() {
             </nav>
           </div>
           <div>
-            <Link href="/dashboard">
+            <Link href="/dashboard?newPrompt=true">
               <Button>New Prompt</Button>
             </Link>
           </div>

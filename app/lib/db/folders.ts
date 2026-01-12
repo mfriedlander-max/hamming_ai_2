@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { db } from "./client";
 import type { Folder } from "@/types";
 import { DEFAULT_FOLDER_ID, DEFAULT_FOLDER_NAME } from "@/types/folder";
+import { deleteProjectWithRelated } from "./projects";
 
 export class CannotDeleteDefaultFolderError extends Error {
   constructor() {
@@ -107,7 +108,7 @@ export async function updateFolder(
 /**
  * Deletes a folder by id.
  * SAFETY: Cannot delete the default folder.
- * SAFETY: Moves all projects in the folder to the default folder before deletion.
+ * WARNING: Permanently deletes all projects (iterations) in the folder.
  */
 export async function deleteFolder(id: string): Promise<void> {
   // Cannot delete default folder
@@ -120,14 +121,13 @@ export async function deleteFolder(id: string): Promise<void> {
     throw new FolderNotFoundError(id);
   }
 
-  // Ensure default folder exists before moving projects
-  await ensureDefaultFolder();
+  // Get all projects in this folder
+  const projects = await db.projects.where("folderId").equals(id).toArray();
 
-  // Move all projects in this folder to the default folder
-  await db.projects
-    .where("folderId")
-    .equals(id)
-    .modify({ folderId: DEFAULT_FOLDER_ID, updatedAt: Date.now() });
+  // Delete each project with all its related data (cascading delete)
+  for (const project of projects) {
+    await deleteProjectWithRelated(project.id);
+  }
 
   // Now safe to delete the folder
   await db.folders.delete(id);
