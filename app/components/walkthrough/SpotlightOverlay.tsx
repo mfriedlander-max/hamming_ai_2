@@ -65,7 +65,7 @@ export function SpotlightOverlay() {
     const clickTarget = document.querySelector(`[data-tour="${currentStepData.target}"]`);
 
     if (!highlightElement && !clickTarget) {
-      // Neither target found - center the tooltip and show Continue
+      // Neither target found - center the tooltip and show Continue (or wait for target to appear)
       setSpotlightRect(null);
       setTargetNotFound(true);
       setTooltipPosition({

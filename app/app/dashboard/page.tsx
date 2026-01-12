@@ -75,9 +75,18 @@ function DashboardPageInner() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [lastCreatedFolderId, setLastCreatedFolderId] = useState<string | null>(null);
 
-  // Walkthrough context for iteration card targeting
-  const { isActive: isWalkthroughActive, currentStepTarget } = useWalkthrough();
+  // Walkthrough context for iteration card targeting and dialog dismissal
+  const { isActive: isWalkthroughActive, currentStepTarget, dismiss: dismissWalkthrough } = useWalkthrough();
   const isIterationCardStep = isWalkthroughActive && currentStepTarget === "iteration-card";
+
+  // Handler for dialog open state changes - dismisses walkthrough when dialog closes during "Name Your Prompt" step
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsCreatingFolder(open);
+    // If dialog is closing while walkthrough is on the "Name Your Prompt" step, dismiss tour
+    if (!open && isWalkthroughActive && currentStepTarget === "prompt-create-button") {
+      dismissWalkthrough();
+    }
+  };
 
   // Handle newPrompt query param from header button
   useEffect(() => {
@@ -342,7 +351,7 @@ function DashboardPageInner() {
       </DndContext>
 
       {/* Create Prompt Dialog */}
-      <Dialog open={isCreatingFolder} onOpenChange={setIsCreatingFolder}>
+      <Dialog open={isCreatingFolder} onOpenChange={handleDialogOpenChange}>
         <DialogContent data-tour="prompt-dialog">
           <DialogHeader>
             <DialogTitle>Create New Prompt</DialogTitle>
@@ -365,7 +374,7 @@ function DashboardPageInner() {
             <Button
               variant="outline"
               onClick={() => {
-                setIsCreatingFolder(false);
+                handleDialogOpenChange(false);
                 setNewFolderName("");
               }}
               disabled={isSubmitting}

@@ -159,15 +159,17 @@ export function WalkthroughProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const dismiss = useCallback(() => {
-    if (isFullTour) {
-      // Mark as seen so it doesn't auto-start again
+    if (isFullTour || (!hasSeenFullTour && currentSection === "dashboard")) {
+      // Mark as complete for:
+      // 1. Full tour dismissal
+      // 2. First-time dashboard tour dismissal (so it doesn't auto-restart)
       markTourComplete();
     } else {
       setIsActive(false);
       setCurrentSection(null);
       setCurrentStep(0);
     }
-  }, [isFullTour, markTourComplete]);
+  }, [isFullTour, hasSeenFullTour, currentSection, markTourComplete]);
 
   const nextStep = useCallback(() => {
     const currentSteps = getCurrentSteps();
