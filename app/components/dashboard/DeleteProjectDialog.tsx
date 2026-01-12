@@ -17,6 +17,7 @@ interface DeleteProjectDialogProps {
   onOpenChange: (open: boolean) => void;
   projectName: string;
   onConfirm: () => Promise<void>;
+  title?: string;
 }
 
 export function DeleteProjectDialog({
@@ -24,6 +25,7 @@ export function DeleteProjectDialog({
   onOpenChange,
   projectName,
   onConfirm,
+  title,
 }: DeleteProjectDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -45,7 +47,7 @@ export function DeleteProjectDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-red-500" />
-            Delete Project
+            {title || "Delete Project"}
           </DialogTitle>
           <DialogDescription className="pt-2">
             Are you sure you want to delete <strong>"{projectName}"</strong>?

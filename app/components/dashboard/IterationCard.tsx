@@ -166,6 +166,7 @@ export function IterationCard({
         onOpenChange={setIsDeleteOpen}
         projectName={project.name}
         onConfirm={handleDelete}
+        title={`Delete ${project.name}`}
       />
 
       {/* Rename Dialog */}

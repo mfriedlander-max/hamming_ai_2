@@ -8,7 +8,7 @@ export const LANDING_CONTENT = {
     subheadline2:
       "Improve AI system prompts at scale. Get concrete suggestions based on your test results.",
     primaryCTA: "Get Started",
-    primaryCTAHref: "/dashboard?newPrompt=true",
+    primaryCTAHref: "/dashboard",
   },
 
   productIntro: {
@@ -95,6 +95,6 @@ export const LANDING_CONTENT = {
     heading: "Start Improving Your Prompts Today",
     subheading: "No credit card required. Analyze your first batch in minutes.",
     buttonText: "Analyze a Test Batch",
-    buttonHref: "/dashboard?newPrompt=true",
+    buttonHref: "/dashboard",
   },
 };
