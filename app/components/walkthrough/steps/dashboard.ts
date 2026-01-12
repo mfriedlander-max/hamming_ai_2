@@ -26,6 +26,7 @@ export const dashboardSteps: WalkthroughStep[] = [
     target: "prompt-create-button",
     highlightTarget: "prompt-dialog",
     type: "action",
+    strictAction: true,
     title: "Name Your Prompt",
     description:
       "Enter a descriptive name like 'Customer Support Bot' or 'Email Writer', then click Create to continue.",

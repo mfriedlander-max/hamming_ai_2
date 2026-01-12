@@ -37,8 +37,8 @@ export function SpotlightOverlay() {
   const currentStepData = steps[currentStep];
 
   // Determine if this step should show a Continue button
-  // Info steps always show Continue, action steps show Continue only if target not found
-  const showContinueButton = currentStepData?.type === "info" || targetNotFound;
+  // Info steps always show Continue, action steps show Continue only if target not found (unless strictAction)
+  const showContinueButton = currentStepData?.type === "info" || (targetNotFound && !currentStepData?.strictAction);
   const isLastStep = currentStep === steps.length - 1;
 
   // Find target element and calculate spotlight position

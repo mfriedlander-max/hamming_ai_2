@@ -13,6 +13,7 @@ export interface WalkthroughStep {
   title: string;
   description: string;
   highlightTarget?: string; // Optional: element to highlight (blue ring) if different from target
+  strictAction?: boolean; // If true, action steps won't show Continue fallback - user must complete the action
 }
 
 interface WalkthroughContextType {
@@ -86,7 +87,7 @@ export function WalkthroughProvider({ children }: { children: React.ReactNode })
     ) {
       // Small delay to let the page render
       const timer = setTimeout(() => {
-        startWalkthrough("dashboard", true);
+        startWalkthrough("dashboard", false);
       }, 500);
       return () => clearTimeout(timer);
     }
@@ -148,35 +149,6 @@ export function WalkthroughProvider({ children }: { children: React.ReactNode })
     return steps[currentSection] || [];
   }, [currentSection, steps]);
 
-  const nextStep = useCallback(() => {
-    const currentSteps = getCurrentSteps();
-    if (currentStep < currentSteps.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    } else if (isFullTour) {
-      // Move to next section in full tour
-      const currentIndex = SECTION_ORDER.indexOf(currentSection!);
-      if (currentIndex < SECTION_ORDER.length - 1) {
-        // There's a next section, but we wait for navigation to trigger it
-        // For now, just complete this section
-        setIsActive(false);
-        setCurrentSection(null);
-        setCurrentStep(0);
-      } else {
-        // Full tour complete
-        markTourComplete();
-      }
-    } else {
-      // Section complete
-      dismiss();
-    }
-  }, [currentStep, getCurrentSteps, isFullTour, currentSection]);
-
-  const prevStep = useCallback(() => {
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  }, [currentStep]);
-
   const markTourComplete = useCallback(() => {
     localStorage.setItem(STORAGE_KEY, "true");
     setHasSeenFullTour(true);
@@ -196,6 +168,40 @@ export function WalkthroughProvider({ children }: { children: React.ReactNode })
       setCurrentStep(0);
     }
   }, [isFullTour, markTourComplete]);
+
+  const nextStep = useCallback(() => {
+    const currentSteps = getCurrentSteps();
+    if (currentStep < currentSteps.length - 1) {
+      setCurrentStep((prev) => prev + 1);
+    } else if (isFullTour) {
+      // Move to next section in full tour
+      const currentIndex = SECTION_ORDER.indexOf(currentSection!);
+      if (currentIndex < SECTION_ORDER.length - 1) {
+        // There's a next section, but we wait for navigation to trigger it
+        // For now, just complete this section
+        setIsActive(false);
+        setCurrentSection(null);
+        setCurrentStep(0);
+      } else {
+        // Full tour complete
+        markTourComplete();
+      }
+    } else {
+      // Section complete
+      if (!hasSeenFullTour && currentSection === "dashboard") {
+        // First-time dashboard tour complete - mark as seen
+        markTourComplete();
+      } else {
+        dismiss();
+      }
+    }
+  }, [currentStep, getCurrentSteps, isFullTour, currentSection, hasSeenFullTour, markTourComplete, dismiss]);
+
+  const prevStep = useCallback(() => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  }, [currentStep]);
 
   // Compute current step target for external components (like HelpButton)
   const currentStepTarget = isActive && currentSection
