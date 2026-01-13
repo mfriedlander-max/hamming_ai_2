@@ -210,14 +210,19 @@ export function SpotlightOverlay() {
     window.addEventListener("resize", handleResize);
     window.addEventListener("scroll", handleResize, true);
 
-    // Retry finding target element if not found (for dynamically rendered elements like dialogs)
+    // Retry finding target element AND waiting for it to become enabled
+    // (for dynamically rendered elements like dialogs, and buttons that start disabled)
     let retryInterval: NodeJS.Timeout | null = null;
     if (currentStepData?.target && targetNotFound) {
       retryInterval = setInterval(() => {
         const target = document.querySelector(`[data-tour="${currentStepData.target}"]`);
         if (target) {
-          updateSpotlight();
-          if (retryInterval) clearInterval(retryInterval);
+          // Check if button is now enabled (if it's a button)
+          const isDisabled = target instanceof HTMLButtonElement && target.disabled;
+          if (!isDisabled) {
+            updateSpotlight();
+            if (retryInterval) clearInterval(retryInterval);
+          }
         }
       }, 200);
     }
