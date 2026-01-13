@@ -37,6 +37,8 @@ const steps = [
 
 // Visual components for each step
 function UploadVisual() {
+  const [uploadComplete, setUploadComplete] = useState(false);
+
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full max-w-lg">
       <div className="flex items-center gap-3 mb-4">
@@ -50,7 +52,9 @@ function UploadVisual() {
       </div>
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Uploading...</span>
+          <span className={uploadComplete ? "text-green-600 font-medium" : "text-gray-600"}>
+            {uploadComplete ? "Done" : "Uploading..."}
+          </span>
           <span className="text-blue-600 font-medium">100%</span>
         </div>
         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -58,7 +62,8 @@ function UploadVisual() {
             className="h-full bg-blue-600 rounded-full"
             initial={{ width: "0%" }}
             animate={{ width: "100%" }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            transition={{ duration: 2.0, ease: [0.4, 0.0, 0.2, 1] }}
+            onAnimationComplete={() => setUploadComplete(true)}
           />
         </div>
       </div>
@@ -331,7 +336,10 @@ export function WorkflowSteps() {
                 transition={{ duration: 0.3 }}
                 className="w-full flex justify-center"
               >
-                {visuals[activeStep]()}
+                {(() => {
+                  const VisualComponent = visuals[activeStep];
+                  return <VisualComponent />;
+                })()}
               </motion.div>
             </AnimatePresence>
           </div>
