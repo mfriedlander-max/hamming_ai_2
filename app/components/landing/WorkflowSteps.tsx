@@ -38,7 +38,7 @@ const steps = [
 // Visual components for each step
 function UploadVisual() {
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full max-w-md">
+    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full max-w-lg">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
           <FileJson className="w-5 h-5 text-blue-600" />
@@ -74,7 +74,7 @@ function UploadVisual() {
 
 function AnalyzeVisual() {
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full max-w-md">
+    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full max-w-lg">
       <div className="flex items-center gap-2 mb-4">
         <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
         <span className="text-gray-700 font-medium">Analyzing outputs...</span>
@@ -124,7 +124,7 @@ function AnalyzeVisual() {
 
 function ReviewVisual() {
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden w-full max-w-md">
+    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden w-full max-w-lg">
       <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
         <span className="text-sm font-medium text-gray-700">
           Failure Categories (3)
@@ -168,7 +168,7 @@ function ReviewVisual() {
 
 function ApplyVisual() {
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden w-full max-w-md">
+    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden w-full max-w-lg">
       <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
         <span className="text-sm font-medium text-gray-700">
           Preview Changes
