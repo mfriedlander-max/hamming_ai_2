@@ -51,22 +51,29 @@ function UploadVisual() {
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Uploading...</span>
-          <span className="text-blue-600 font-medium">75%</span>
+          <span className="text-blue-600 font-medium">100%</span>
         </div>
         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-blue-600 rounded-full"
             initial={{ width: "0%" }}
-            animate={{ width: "75%" }}
+            animate={{ width: "100%" }}
             transition={{ duration: 1, ease: "easeOut" }}
           />
         </div>
       </div>
       <div className="mt-4 pt-4 border-t border-gray-100">
-        <p className="text-sm text-gray-500">
-          <span className="text-green-600 font-medium">5 test cases</span> ready
-          to analyze
-        </p>
+        <div className="flex items-start gap-3 px-3 py-3 bg-green-50 border border-green-200 rounded-lg">
+          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-medium text-green-900">File Parsed Successfully</p>
+            <div className="mt-1.5 space-y-0.5 text-sm text-green-700">
+              <p>File: test-batch.json</p>
+              <p>Total tests: 5</p>
+              <p>Passed: 2 | Failed: 3</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -161,6 +168,19 @@ function ReviewVisual() {
             When unable to fulfill a request, failed to offer alternatives...
           </p>
         </div>
+        <div className="border-l-4 border-red-400 bg-red-50/50 rounded-r-lg p-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-medium text-gray-900 text-sm">
+              Tone Misalignment
+            </span>
+            <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded">
+              high
+            </span>
+          </div>
+          <p className="text-xs text-gray-600">
+            Response tone was too formal for casual customer inquiry...
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -193,12 +213,21 @@ function ApplyVisual() {
           <span className="text-green-400 mr-2">+</span>
           Answer questions directly, offering alternatives when needed.
         </div>
+        <div className="h-2" />
+        <div className="bg-red-50 text-red-800 px-2 py-1 rounded">
+          <span className="text-red-400 mr-2">-</span>
+          Keep responses brief.
+        </div>
+        <div className="bg-green-50 text-green-800 px-2 py-1 rounded">
+          <span className="text-green-400 mr-2">+</span>
+          Keep responses brief but warm and personable.
+        </div>
       </div>
       <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CheckCircle className="w-4 h-4 text-green-600" />
           <span className="text-sm text-green-600 font-medium">
-            2 changes ready
+            3 changes ready
           </span>
         </div>
         <div className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg">
@@ -234,7 +263,7 @@ export function WorkflowSteps() {
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center max-w-6xl mx-auto">
           {/* Left: Steps */}
           <div className="space-y-2">
             {steps.map((step, index) => {
