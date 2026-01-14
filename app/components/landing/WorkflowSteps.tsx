@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import {
   Upload,
   Sparkles,
@@ -38,6 +38,18 @@ const steps = [
 // Visual components for each step
 function UploadVisual() {
   const [uploadComplete, setUploadComplete] = useState(false);
+  const progress = useMotionValue(0);
+  const progressPercent = useTransform(progress, (v) => `${Math.round(v)}%`);
+  const progressWidth = useTransform(progress, (v) => `${v}%`);
+
+  useEffect(() => {
+    const controls = animate(progress, 100, {
+      duration: 2.0,
+      ease: [0.4, 0.0, 0.2, 1],
+      onComplete: () => setUploadComplete(true),
+    });
+    return controls.stop;
+  }, [progress]);
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full max-w-lg">
@@ -55,15 +67,14 @@ function UploadVisual() {
           <span className={uploadComplete ? "text-green-600 font-medium" : "text-gray-600"}>
             {uploadComplete ? "Done" : "Uploading..."}
           </span>
-          <span className="text-blue-600 font-medium">100%</span>
+          <motion.span className="text-blue-600 font-medium">
+            {progressPercent}
+          </motion.span>
         </div>
         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-blue-600 rounded-full"
-            initial={{ width: "0%" }}
-            animate={{ width: "100%" }}
-            transition={{ duration: 2.0, ease: [0.4, 0.0, 0.2, 1] }}
-            onAnimationComplete={() => setUploadComplete(true)}
+            style={{ width: progressWidth }}
           />
         </div>
       </div>
