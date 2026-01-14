@@ -17,9 +17,15 @@ export function Sparkline({
     return null;
   }
 
-  // Handle single value - show a horizontal line
+  // Padding to ensure dots aren't clipped at edges
+  const dotRadius = 2.5;
+  const padding = dotRadius + 1;
+  const drawWidth = width - padding * 2;
+  const drawHeight = height - padding * 2;
+
+  // Handle single value - show a centered dot
   if (values.length === 1) {
-    const y = height - (values[0] / 100) * height;
+    const y = padding + drawHeight - (values[0] / 100) * drawHeight;
     return (
       <svg
         width={width}
@@ -30,18 +36,18 @@ export function Sparkline({
         <circle
           cx={width / 2}
           cy={y}
-          r={2}
+          r={dotRadius}
           className="fill-blue-500"
         />
       </svg>
     );
   }
 
-  // Calculate points for the polyline
+  // Calculate points for the polyline with padding
   const points = values
     .map((value, index) => {
-      const x = (index / (values.length - 1)) * width;
-      const y = height - (value / 100) * height;
+      const x = padding + (index / (values.length - 1)) * drawWidth;
+      const y = padding + drawHeight - (value / 100) * drawHeight;
       return `${x},${y}`;
     })
     .join(" ");
@@ -72,9 +78,9 @@ export function Sparkline({
       />
       {/* End dot to emphasize the latest value */}
       <circle
-        cx={width}
-        cy={height - (values[values.length - 1] / 100) * height}
-        r={2.5}
+        cx={padding + drawWidth}
+        cy={padding + drawHeight - (values[values.length - 1] / 100) * drawHeight}
+        r={dotRadius}
         className="fill-blue-500"
       />
     </svg>
