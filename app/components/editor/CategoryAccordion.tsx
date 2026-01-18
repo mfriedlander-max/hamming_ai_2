@@ -234,6 +234,7 @@ export function CategoryAccordion({
                           variant="outline"
                           onClick={() => onSetStatus(suggestion.id, "pending")}
                           className="text-amber-600 hover:text-amber-700"
+                          {...(isTourTargetSuggestionCard ? { "data-tour": "suggestion-action" } : {})}
                         >
                           <Undo2 className="mr-1 h-3 w-3" />
                           Unaccept
@@ -247,6 +248,7 @@ export function CategoryAccordion({
                           variant="outline"
                           onClick={() => onSetStatus(suggestion.id, "pending")}
                           className="text-amber-600 hover:text-amber-700"
+                          {...(isTourTargetSuggestionCard ? { "data-tour": "suggestion-action" } : {})}
                         >
                           <Undo2 className="mr-1 h-3 w-3" />
                           Unreject
@@ -262,6 +264,7 @@ export function CategoryAccordion({
                           variant="outline"
                           onClick={() => onSetStatus(suggestion.id, "reverted_applied")}
                           className="text-blue-600 hover:text-blue-700"
+                          {...(isTourTargetSuggestionCard ? { "data-tour": "suggestion-action" } : {})}
                         >
                           <Undo2 className="mr-1 h-3 w-3" />
                           Unapply
@@ -275,6 +278,7 @@ export function CategoryAccordion({
                           variant="outline"
                           onClick={() => onSetStatus(suggestion.id, "reverted_rejected")}
                           className="text-amber-600 hover:text-amber-700"
+                          {...(isTourTargetSuggestionCard ? { "data-tour": "suggestion-action" } : {})}
                         >
                           <Undo2 className="mr-1 h-3 w-3" />
                           Unreject
@@ -290,6 +294,7 @@ export function CategoryAccordion({
                           variant="outline"
                           onClick={() => onSetStatus(suggestion.id, "applied")}
                           className="text-amber-600 hover:text-amber-700"
+                          {...(isTourTargetSuggestionCard ? { "data-tour": "suggestion-action" } : {})}
                         >
                           <Undo2 className="mr-1 h-3 w-3" />
                           Reapply
@@ -303,6 +308,7 @@ export function CategoryAccordion({
                           variant="outline"
                           onClick={() => onSetStatus(suggestion.id, "rejected_applied")}
                           className="text-amber-600 hover:text-amber-700"
+                          {...(isTourTargetSuggestionCard ? { "data-tour": "suggestion-action" } : {})}
                         >
                           <Undo2 className="mr-1 h-3 w-3" />
                           Rereject

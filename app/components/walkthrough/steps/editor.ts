@@ -28,7 +28,7 @@ export const editorSteps: WalkthroughStep[] = [
     type: "action",
     title: "Accept or Reject",
     description:
-      "Accept suggestions you agree with, reject ones you don't. You can also unapply or unreject previous decisions to reconsider them.",
+      "Accept suggestions you agree with, or reject ones you don't. Click any action button to continue.",
   },
   {
     target: "diff-viewer",
