@@ -250,36 +250,19 @@ export function SpotlightOverlay() {
     }
   }, [isActive, currentStepData, targetNotFound, currentStep]);
 
-  // Handle keyboard navigation (Bug 1 + Bug 3 fixes)
+  // Handle keyboard - only Escape to dismiss (no Enter/ArrowRight navigation)
   useEffect(() => {
     if (!isActive) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         dismiss();
-      } else if (e.key === "ArrowRight" || e.key === "Enter") {
-        // Bug 1 Fix: Don't advance if user is typing in an input/textarea
-        const activeElement = document.activeElement;
-        const isTypingInInput =
-          activeElement instanceof HTMLInputElement ||
-          activeElement instanceof HTMLTextAreaElement ||
-          activeElement?.getAttribute("contenteditable") === "true";
-
-        if (e.key === "Enter" && isTypingInInput) {
-          return; // Let the input handle Enter (e.g., form submission)
-        }
-
-        // Bug 3 Fix: Allow keyboard navigation unless strictAction step with valid target
-        const isStrictActionWithTarget = currentStepData?.strictAction && !targetNotFound;
-        if (!isStrictActionWithTarget) {
-          nextStep();
-        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isActive, dismiss, nextStep, currentStepData, targetNotFound]);
+  }, [isActive, dismiss]);
 
   if (!isActive || !currentStepData) return null;
 
@@ -434,18 +417,6 @@ export function SpotlightOverlay() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Bug 5 Fix: Keyboard hints */}
-            <span className="text-xs text-gray-400 hidden sm:inline">
-              Press{" "}
-              <kbd className="px-1 py-0.5 bg-gray-100 rounded text-gray-600 font-mono text-[10px]">
-                Enter
-              </kbd>{" "}
-              or{" "}
-              <kbd className="px-1 py-0.5 bg-gray-100 rounded text-gray-600 font-mono text-[10px]">
-                →
-              </kbd>
-            </span>
-
             {/* Continue button - only for info steps or when target not found */}
             {showContinueButton && (
               <Button size="sm" onClick={nextStep}>

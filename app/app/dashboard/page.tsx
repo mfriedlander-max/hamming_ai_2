@@ -177,7 +177,8 @@ function DashboardPageInner() {
       const newFolder = await createFolder(newFolderName.trim());
       setLastCreatedFolderId(newFolder.id);
       setNewFolderName("");
-      setIsCreatingFolder(false);
+      // Use handleDialogOpenChange to properly dismiss walkthrough when dialog closes
+      handleDialogOpenChange(false);
     } catch (error) {
       console.error("Failed to create folder:", error);
     } finally {
