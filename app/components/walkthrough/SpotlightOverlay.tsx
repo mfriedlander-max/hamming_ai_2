@@ -30,6 +30,7 @@ export function SpotlightOverlay() {
   } | null>(null);
   const [targetNotFound, setTargetNotFound] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [stuckTimeElapsed, setStuckTimeElapsed] = useState(false);
   const clickHandlerRef = useRef<(() => void) | null>(null);
   const lastStepRef = useRef<number>(-1);
 
@@ -39,6 +40,10 @@ export function SpotlightOverlay() {
   // Determine if this step should show a Continue button
   // Info steps always show Continue, action steps show Continue only if target not found (unless strictAction)
   const showContinueButton = currentStepData?.type === "info" || (targetNotFound && !currentStepData?.strictAction);
+
+  // Bug 2 Fix: Show Skip button for stuck strictAction steps after delay
+  const showSkipButton = currentStepData?.strictAction && targetNotFound && stuckTimeElapsed;
+
   const isLastStep = currentStep === steps.length - 1;
 
   // Find target element and calculate spotlight position
@@ -161,7 +166,7 @@ export function SpotlightOverlay() {
     setTooltipPosition({ top, left, placement });
   }, [currentStepData, currentStep]);
 
-  // Set up click handler for action steps
+  // Bug 4 Fix: Use event delegation for action steps (handles dynamic buttons)
   useEffect(() => {
     if (!isActive || !currentStepData) return;
 
@@ -171,28 +176,22 @@ export function SpotlightOverlay() {
       return;
     }
 
-    // Find all elements with the target data-tour attribute
-    // This handles cases like suggestion-action where both Accept and Reject buttons have the same attribute
-    const targets = document.querySelectorAll(`[data-tour="${currentStepData.target}"]`);
-    if (targets.length === 0) return;
-
-    const handleClick = () => {
-      // Advance to next step when any target element is clicked
-      nextStep();
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as Element;
+      // Check if clicked element or any ancestor has the target data-tour attribute
+      const tourElement = target.closest(`[data-tour="${currentStepData.target}"]`);
+      if (tourElement) {
+        // Advance to next step when any target element is clicked
+        nextStep();
+      }
     };
 
-    // Store reference for cleanup
-    clickHandlerRef.current = handleClick;
-
-    // Add click listener to all matching elements
-    targets.forEach(target => {
-      target.addEventListener("click", handleClick, { capture: true });
-    });
+    // Attach to document using event delegation
+    document.addEventListener("click", handleClick, { capture: true });
+    clickHandlerRef.current = handleClick as unknown as () => void;
 
     return () => {
-      targets.forEach(target => {
-        target.removeEventListener("click", handleClick, { capture: true });
-      });
+      document.removeEventListener("click", handleClick, { capture: true });
       clickHandlerRef.current = null;
     };
   }, [isActive, currentStepData, targetNotFound, nextStep]);
@@ -235,21 +234,52 @@ export function SpotlightOverlay() {
     };
   }, [isActive, updateSpotlight, currentStepData, targetNotFound]);
 
-  // Handle escape key
+  // Bug 2 Fix: Track stuck time on strictAction steps with missing target
+  useEffect(() => {
+    if (!isActive || !currentStepData) return;
+
+    const isStuck = currentStepData.strictAction && targetNotFound;
+    setStuckTimeElapsed(false);
+
+    if (isStuck) {
+      const timer = setTimeout(() => {
+        setStuckTimeElapsed(true);
+      }, 5000); // Show Skip after 5 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [isActive, currentStepData, targetNotFound, currentStep]);
+
+  // Handle keyboard navigation (Bug 1 + Bug 3 fixes)
   useEffect(() => {
     if (!isActive) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         dismiss();
-      } else if ((e.key === "ArrowRight" || e.key === "Enter") && showContinueButton) {
-        nextStep();
+      } else if (e.key === "ArrowRight" || e.key === "Enter") {
+        // Bug 1 Fix: Don't advance if user is typing in an input/textarea
+        const activeElement = document.activeElement;
+        const isTypingInInput =
+          activeElement instanceof HTMLInputElement ||
+          activeElement instanceof HTMLTextAreaElement ||
+          activeElement?.getAttribute("contenteditable") === "true";
+
+        if (e.key === "Enter" && isTypingInInput) {
+          return; // Let the input handle Enter (e.g., form submission)
+        }
+
+        // Bug 3 Fix: Allow keyboard navigation unless strictAction step with valid target
+        const isStrictActionWithTarget = currentStepData?.strictAction && !targetNotFound;
+        if (!isStrictActionWithTarget) {
+          nextStep();
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isActive, dismiss, nextStep, showContinueButton]);
+  }, [isActive, dismiss, nextStep, currentStepData, targetNotFound]);
 
   if (!isActive || !currentStepData) return null;
 
@@ -403,12 +433,33 @@ export function SpotlightOverlay() {
             ))}
           </div>
 
-          {/* Continue button - only for info steps or when target not found */}
-          {showContinueButton && (
-            <Button size="sm" onClick={nextStep}>
-              {getButtonLabel()}
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            {/* Bug 5 Fix: Keyboard hints */}
+            <span className="text-xs text-gray-400 hidden sm:inline">
+              Press{" "}
+              <kbd className="px-1 py-0.5 bg-gray-100 rounded text-gray-600 font-mono text-[10px]">
+                Enter
+              </kbd>{" "}
+              or{" "}
+              <kbd className="px-1 py-0.5 bg-gray-100 rounded text-gray-600 font-mono text-[10px]">
+                →
+              </kbd>
+            </span>
+
+            {/* Continue button - only for info steps or when target not found */}
+            {showContinueButton && (
+              <Button size="sm" onClick={nextStep}>
+                {getButtonLabel()}
+              </Button>
+            )}
+
+            {/* Bug 2 Fix: Skip button for stuck strictAction steps */}
+            {showSkipButton && !showContinueButton && (
+              <Button size="sm" variant="outline" onClick={nextStep}>
+                Skip
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Skip tour link */}

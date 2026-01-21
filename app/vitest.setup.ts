@@ -47,6 +47,7 @@ vi.mock('next/navigation', () => ({
   }),
   useParams: () => ({}),
   useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '/dashboard',
 }))
 
 // Reset mocks between tests
