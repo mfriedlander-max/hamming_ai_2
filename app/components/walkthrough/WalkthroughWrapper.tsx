@@ -5,7 +5,7 @@ import { WalkthroughProvider } from "./WalkthroughProvider";
 import { SpotlightOverlay } from "./SpotlightOverlay";
 import { HelpButton } from "./HelpButton";
 
-export function WalkthroughWrapper({ children }: { children: React.ReactNode }) {
+function WalkthroughContent({ children }: { children: React.ReactNode }) {
   return (
     <WalkthroughProvider>
       {children}
@@ -14,5 +14,13 @@ export function WalkthroughWrapper({ children }: { children: React.ReactNode }) 
         <HelpButton />
       </Suspense>
     </WalkthroughProvider>
+  );
+}
+
+export function WalkthroughWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<>{children}</>}>
+      <WalkthroughContent>{children}</WalkthroughContent>
+    </Suspense>
   );
 }

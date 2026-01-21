@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {"id": "t1", "status": "pass", "transcript": "User: Hi\nAssistant: Hello!", "expectedBehavior": "Greet user", "actualBehavior": "Greeted"},
+    {"id": "t2", "status": "pass", "transcript": "User: Thanks\nAssistant: You're welcome!", "expectedBehavior": "Respond politely", "actualBehavior": "Responded"},
+    {"id": "t3", "status": "pass", "transcript": "User: Bye\nAssistant: Goodbye!", "expectedBehavior": "Say goodbye", "actualBehavior": "Said goodbye"},
+    {"id": "t4", "status": "fail", "transcript": "User: Help\nAssistant: No", "expectedBehavior": "Offer help", "actualBehavior": "Refused"},
+    {"id": "t5", "status": "fail", "transcript": "User: Question\nAssistant: ...", "expectedBehavior": "Answer", "actualBehavior": "Silent"},
+    {"id": "t6", "status": "fail", "transcript": "User: Info\nAssistant: None", "expectedBehavior": "Provide info", "actualBehavior": "None given"},
+    {"id": "t7", "status": "fail", "transcript": "User: Price\nAssistant: ???", "expectedBehavior": "Give price", "actualBehavior": "Confused"},
+    {"id": "t8", "status": "fail", "transcript": "User: Order\nAssistant: Error", "expectedBehavior": "Process order", "actualBehavior": "Error"},
+    {"id": "t9", "status": "fail", "transcript": "User: Status\nAssistant: Unknown", "expectedBehavior": "Give status", "actualBehavior": "Unknown"},
+    {"id": "t10", "status": "fail", "transcript": "User: Return\nAssistant: No returns", "expectedBehavior": "Process return", "actualBehavior": "Refused"}
+  ]
+}

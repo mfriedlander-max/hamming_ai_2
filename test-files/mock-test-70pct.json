@@ -1,0 +1,74 @@
+{
+  "tests": [
+    {
+      "id": "test-001",
+      "status": "pass",
+      "transcript": "User: What are your business hours?\nAssistant: Our customer support is available Monday through Friday, 9 AM to 5 PM EST. Is there anything I can help you with today?",
+      "expectedBehavior": "Provide accurate business hours information",
+      "actualBehavior": "Correctly stated business hours"
+    },
+    {
+      "id": "test-002",
+      "status": "pass",
+      "transcript": "User: Where is my order #12345?\nAssistant: I'd be happy to help you track your order #12345. Let me look that up for you. Your order is currently in transit and expected to arrive within 2-3 business days.",
+      "expectedBehavior": "Acknowledge order number and provide tracking information",
+      "actualBehavior": "Provided order status and delivery estimate"
+    },
+    {
+      "id": "test-003",
+      "status": "pass",
+      "transcript": "User: Do you ship to Canada?\nAssistant: Yes, we do ship to Canada! International shipping typically takes 7-14 business days. There may be additional customs fees depending on your province. Would you like me to provide more details about international shipping?",
+      "expectedBehavior": "Confirm international shipping availability and provide relevant details",
+      "actualBehavior": "Confirmed shipping to Canada with timeline and customs info"
+    },
+    {
+      "id": "test-004",
+      "status": "pass",
+      "transcript": "User: What payment methods do you accept?\nAssistant: We accept all major credit cards (Visa, Mastercard, American Express, Discover), PayPal, and Apple Pay. Is there a specific payment method you'd like to use?",
+      "expectedBehavior": "List all accepted payment methods clearly",
+      "actualBehavior": "Provided comprehensive list of payment options"
+    },
+    {
+      "id": "test-005",
+      "status": "pass",
+      "transcript": "User: How do I change my shipping address?\nAssistant: I can help you update your shipping address! If your order hasn't shipped yet, I can change it right away. If it's already in transit, I can try to redirect it. Could you provide your order number so I can check the status?",
+      "expectedBehavior": "Explain the process for changing shipping address based on order status",
+      "actualBehavior": "Clearly explained options and asked for order details"
+    },
+    {
+      "id": "test-006",
+      "status": "pass",
+      "transcript": "User: Do you have a size guide?\nAssistant: Absolutely! You can find our detailed size guide on each product page. We also have a general sizing chart at the bottom of our website. Would you like me to help you find the right size for a specific item?",
+      "expectedBehavior": "Direct user to size guide resources",
+      "actualBehavior": "Provided location of size guide and offered additional help"
+    },
+    {
+      "id": "test-007",
+      "status": "pass",
+      "transcript": "User: Can I get a discount code?\nAssistant: I'd be happy to help! Sign up for our newsletter to receive 10% off your first order. We also run seasonal promotions - right now we have a 15% off sale on select items. Is there a specific product you're interested in?",
+      "expectedBehavior": "Inform about available discounts and promotions",
+      "actualBehavior": "Provided multiple discount options and current promotions"
+    },
+    {
+      "id": "test-008",
+      "status": "fail",
+      "transcript": "User: I want a refund NOW! This product is absolute garbage!\nAssistant: I understand you want a refund. Please provide your order number and I will process it.",
+      "expectedBehavior": "De-escalate the situation first by acknowledging frustration, apologize for the experience, then explain refund policy and process",
+      "actualBehavior": "Jumped straight to refund request without acknowledging customer frustration or apologizing"
+    },
+    {
+      "id": "test-009",
+      "status": "fail",
+      "transcript": "User: Your company is terrible! I've been waiting 3 weeks for my order!\nAssistant: I can check on your order. What is your order number?",
+      "expectedBehavior": "Express empathy, apologize for the delay, acknowledge the frustration before asking for order details",
+      "actualBehavior": "No empathy shown, no apology given, immediately asked for order number"
+    },
+    {
+      "id": "test-010",
+      "status": "fail",
+      "transcript": "User: The product I received is damaged. What do I do?\nAssistant: We can replace damaged items. Please provide your order number.",
+      "expectedBehavior": "Express genuine concern, apologize for the damaged item, ask for photos if helpful, offer replacement AND refund options, provide prepaid return shipping",
+      "actualBehavior": "No apology, no options offered, missing return shipping details"
+    }
+  ]
+}
